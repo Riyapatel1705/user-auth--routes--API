@@ -1,26 +1,21 @@
-import cors from 'cors';
-import dotenv from 'dotenv';
+import env from 'dotenv';
 import express from 'express';
-import { AuthRouter } from './src/routes/AuthRoutes';
-import { UserRouter } from './src/routes/UserRoutes';
-
-dotenv.config();
-
+import path from 'path';
+import { AuthRouter } from './routes/AuthRoutes.js';
 const app = express();
-app.use(cors());
-app.use(express.json());
+env.config();
+const PORT = 3000;
 
-// Routes
+// Middleware
+app.use(express.json()); // Parse incoming JSON requests
+app.use(express.urlencoded({ extended: false })); // Parse URL-encoded data
+app.use(express.static(path.join(__dirname, 'public'))); // Serve static files from 'public' folder
+
+
 app.use(AuthRouter);
-app.use(UserRouter);
-
-app.use((req, res, next) => {
-    console.log(`Incoming request: ${req.method} ${req.url}`);
-    next();
-});
 
 
-const PORT = process.env.PORT || 4000;
+// Start the server
 app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
+  console.log(`Server running on http://localhost:${PORT}`);
 });
