@@ -1,9 +1,15 @@
 import express from 'express';
-import { register } from '../controllers/AuthController.js';
-export const AuthRouter = express.Router()
+import { login, register } from '../controllers/AuthController.js';
+const AuthRouter = express.Router();
 
 
-// User Registration
+//user register route
 AuthRouter.post('/api/register', register);
 
 
+//user login route
+AuthRouter.post('/api/login', login);
+
+
+
+export { AuthRouter };
