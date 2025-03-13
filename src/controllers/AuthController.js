@@ -7,8 +7,6 @@ import { db } from '../db/index.js';
 export const register = async (req, res) => {
     const { first_name, last_name, email, password, created_by } = req.body;
 
-    console.log('Received registration data:', { first_name, last_name, email, password });
-
     if (!validateUsername(first_name, last_name)) {
         return res.status(400).json({ error: 'Username must be at least 3 characters long and contain only letters and numbers.' });
     }
