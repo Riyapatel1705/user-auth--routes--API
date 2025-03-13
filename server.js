@@ -1,6 +1,7 @@
 import env from 'dotenv';
 import express from 'express';
 import { AuthRouter } from './src/routes/AuthRoutes.js'
+import { UserRouter } from './src/routes/UserRoutes.js';
 const app = express();
 env.config();
 const PORT = 3000;
@@ -11,6 +12,7 @@ app.use(express.urlencoded({ extended: false })); // Parse URL-encoded data
 
 
 app.use(AuthRouter);
+app.use(UserRouter);
 
 
 // Start the server
