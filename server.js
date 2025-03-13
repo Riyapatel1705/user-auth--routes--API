@@ -1,8 +1,8 @@
+import cors from 'cors';
 import dotenv from 'dotenv';
 import express from 'express';
-import cors from 'cors';
-import { AuthRouter } from './src/routes/AuthRoutes.js';
-import { UserRouter } from './src/routes/UserRoutes.js';
+import { AuthRouter } from './src/routes/AuthRoutes';
+import { UserRouter } from './src/routes/UserRoutes';
 
 dotenv.config();
 
@@ -10,11 +10,9 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-//use AuthRoutes
-app.use('/',AuthRouter);
-
-//use UserRoutes
-app.use('/',UserRouter);
+// Routes
+app.use(AuthRouter);
+app.use(UserRouter);
 
 app.use((req, res, next) => {
     console.log(`Incoming request: ${req.method} ${req.url}`);
