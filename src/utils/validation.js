@@ -1,4 +1,4 @@
-import { db } from '../db/index.js';
+import { User } from '../models/User.js';
 
 //email validation
 export const validateEmail=(email)=>{
@@ -19,28 +19,22 @@ export const validatePassword=(password)=>{
    return regex1.test(first_name)&&regex2.test(Last_name);
  }
 
- export const checkEmailExists=(email)=>{
-  return new Promise((resolve,reject)=>{
-      db.query('select * from users where email=?',[email],(err,rows)=>{
-          if(err){
-              reject("error in checking email"+err.mesage);
-          }
-          resolve(rows.length>0);
-          
-      });
-  });
+ export const checkEmailExists = async (email) => {
+    try {
+        const user = await User.findOne({ where: { email } });
+        return user !== null;
+    } catch (err) {
+        throw new Error("Error checking email: " + err.message);
+    }
 };
+
 
 //check if user with same name exists or not
-export const checkUsernameExists=(first_name,last_name)=>{
-  return new Promise((resolve,reject)=>{
-      db.query('select * from users where first_name=? and last_name=?',[first_name,last_name],(err,rows)=>{
-          if(err){
-              reject("error in checking for username",err.message);
-          }
-          resolve(rows.length);
-      });
-  });
+export const checkUsernameExists = async (first_name, last_name) => {
+    try {
+        const user = await User.findOne({ where: { first_name, last_name } });
+        return user !== null;
+    } catch (err) {
+        throw new Error("Error checking username: " + err.message);
+    }
 };
-
- 
