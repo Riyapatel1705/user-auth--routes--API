@@ -1,11 +1,9 @@
 import cors from 'cors';
 import dotenv from 'dotenv';
 import express from 'express';
-import { AuthRouter } from '../src/routes/AuthRoutes.js';
-import { UserRouter } from '../src/routes/UserRoutes.js';
-import { db } from '../src/db/index.js';
-
-import {User} from '../src/models/User.js';
+import { AuthRouter } from './src/routes/AuthRoutes.js';
+import { UserRouter } from './src/routes/UserRoutes.js';
+import { db } from './src/db/index.js';
 
 dotenv.config();
 

@@ -1,4 +1,5 @@
-import { db } from '../db/index.js';
+import { db } from '../index.js';
+import { DataTypes } from 'sequelize';
 
 export const User = db.define(
   'users',
@@ -47,9 +48,5 @@ export const User = db.define(
   }
 );
 
-  // Sync model with database (optional, but needed for first-time setup)
-  (async () => {
-    await User.sync({ alter: true }); // ⚠ This will delete existing data
-    console.log('User table recreated');
-  })();
+
   
