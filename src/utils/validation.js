@@ -1,4 +1,4 @@
-import { User } from '../models/User.js';
+import { User } from '../db/models/User.js';
 
 //email validation
 export const validateEmail=(email)=>{
