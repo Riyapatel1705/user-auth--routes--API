@@ -27,7 +27,7 @@ export const User = db.define(
     },
     password: {
       type: DataTypes.STRING,
-      allowNull: false,
+      allowNull: true,
     },
     updated_by: {
       type: DataTypes.STRING,
