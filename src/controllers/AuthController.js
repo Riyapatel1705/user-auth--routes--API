@@ -2,6 +2,7 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { User } from '../db/models/User.js';
 import { checkEmailExists, checkUsernameExists, validateEmail, validatePassword, validateUsername } from '../utils/Validation.js';
+import  logger  from './logger.js';
 
 // Register user
 export const register = async (req, res) => {
@@ -29,18 +30,23 @@ export const register = async (req, res) => {
         }
 
         const hashedPassword = await bcrypt.hash(password, 10);
-        console.log('Hashed password:', hashedPassword);
 
-        const result= await User.create({first_name,last_name,email,password:hashedPassword})
-        if(result){
-            res.status(200).json({message:'user created successfully!'});
+        const result = await User.create({ first_name, last_name, email, password: hashedPassword });
+        
+        if (result) {
+            res.status(200).json({ message: 'User created successfully!' });
+        } else {
+            res.status(400).json({ message: 'Error in creating user' });
         }
-        else {
-            res.status(401).json({message:'error in creating user'});
-        }
-} catch(err){
-    console.error('not able to create user',err);
-}
+    } catch (error) {
+        logger.error({
+            message: error.message,
+            functionName: "register",
+            requestDetails: `${req.method} ${req.originalUrl}`,
+            stack: error.stack,
+        });
+        res.status(500).json({ success: false, error: "Internal server error" });
+    }
 };
 
 // Login user
@@ -63,8 +69,13 @@ export const login = async (req, res) => {
         const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, { expiresIn: '1h' });
 
         res.json({ token });
-    } catch (err) {
-        console.error('Error during login:', err);
-        res.status(500).json({ error: 'Database error' });
+    } catch (error) {
+        logger.error({
+            message: error.message,
+            functionName: "login",
+            requestDetails: `${req.method} ${req.originalUrl}`,
+            stack: error.stack,
+        });
+        res.status(500).json({ error: "Database error" });
     }
 };

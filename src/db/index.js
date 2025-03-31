@@ -1,5 +1,7 @@
 import {Sequelize} from 'sequelize';
 
+
+//create sequelize instance 
  export const db =new Sequelize('google','new','new@71',{
     host:'localhost',
     dialect:'mysql'

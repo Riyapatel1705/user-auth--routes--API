@@ -1,0 +1,107 @@
+2025-03-31T06:17:00.994Z [INFO] [ServerInit] [N/A] Server is running on port 7000
+2025-03-31T06:17:01.277Z [ERROR] [DBInit] [Database connection] Too many keys specified; max 64 keys allowed
+2025-03-31T06:20:13.133Z [ERROR] [register] [POST /api/register] Error checking username: WHERE parameter "last_name" has invalid "undefined" value
+2025-03-31T06:27:22.988Z [INFO] [ServerInit] [N/A] Server is running on port 7000
+2025-03-31T06:27:23.153Z [ERROR] [DBInit] [Database connection] Too many keys specified; max 64 keys allowed
+2025-03-31T06:27:33.145Z [INFO] [ServerInit] [N/A] Server is running on port 7000
+2025-03-31T06:27:33.277Z [ERROR] [DBInit] [Database connection] Too many keys specified; max 64 keys allowed
+2025-03-31T06:27:48.248Z [INFO] [ServerInit] [N/A] Server is running on port 7000
+2025-03-31T06:27:48.379Z [ERROR] [DBInit] [Database connection] Too many keys specified; max 64 keys allowed
+2025-03-31T06:29:06.431Z [INFO] [ServerInit] [N/A] Server is running on port 7000
+2025-03-31T06:29:06.586Z [ERROR] [DBInit] [Database connection] Too many keys specified; max 64 keys allowed
+2025-03-31T06:31:42.640Z [INFO] [ServerInit] [N/A] Server is running on port 7000
+2025-03-31T06:31:42.764Z [ERROR] [DBInit] [Database connection] Too many keys specified; max 64 keys allowed
+2025-03-31T06:32:40.172Z [INFO] [ServerInit] [N/A] Server is running on port 7000
+2025-03-31T06:32:40.294Z [ERROR] [DBInit] [Database connection] Too many keys specified; max 64 keys allowed
+2025-03-31T06:34:36.109Z [INFO] [ServerInit] [N/A] Server is running on port 7000
+2025-03-31T06:34:36.232Z [ERROR] [DBInit] [Database connection] Too many keys specified; max 64 keys allowed
+2025-03-31T06:34:59.882Z [INFO] [RequestLogger] [GET /favicon.ico] Incoming request: GET /favicon.ico
+2025-03-31T06:35:46.800Z [INFO] [ServerInit] [N/A] Server is running on port 7000
+2025-03-31T06:35:46.924Z [ERROR] [DBInit] [Database connection] Too many keys specified; max 64 keys allowed
+2025-03-31T06:40:52.644Z [INFO] [ServerInit] [N/A] Server is running on port 7000
+2025-03-31T06:40:52.831Z [ERROR] [DBInit] [Database connection] Too many keys specified; max 64 keys allowed
+2025-03-31T06:40:57.453Z [INFO] [ServerInit] [N/A] Server is running on port 7000
+2025-03-31T06:40:57.638Z [ERROR] [DBInit] [Database connection] Too many keys specified; max 64 keys allowed
+2025-03-31T06:41:01.725Z [INFO] [ServerInit] [N/A] Server is running on port 7000
+2025-03-31T06:41:01.876Z [ERROR] [DBInit] [Database connection] Too many keys specified; max 64 keys allowed
+2025-03-31T06:41:05.516Z [INFO] [ServerInit] [N/A] Server is running on port 7000
+2025-03-31T06:41:05.628Z [ERROR] [DBInit] [Database connection] Too many keys specified; max 64 keys allowed
+2025-03-31T06:41:08.965Z [INFO] [ServerInit] [N/A] Server is running on port 7000
+2025-03-31T06:41:09.095Z [ERROR] [DBInit] [Database connection] Too many keys specified; max 64 keys allowed
+2025-03-31T06:41:11.420Z [INFO] [ServerInit] [N/A] Server is running on port 7000
+2025-03-31T06:41:11.539Z [ERROR] [DBInit] [Database connection] Too many keys specified; max 64 keys allowed
+2025-03-31T06:42:50.448Z [INFO] [ServerInit] [N/A] Server is running on port 7000
+2025-03-31T06:42:50.587Z [ERROR] [DBInit] [Database connection] Too many keys specified; max 64 keys allowed
+2025-03-31T06:42:54.185Z [INFO] [ServerInit] [N/A] Server is running on port 7000
+2025-03-31T06:42:54.309Z [ERROR] [DBInit] [Database connection] Too many keys specified; max 64 keys allowed
+2025-03-31T06:43:05.699Z [INFO] [ServerInit] [N/A] Server is running on port 7000
+2025-03-31T06:43:05.866Z [ERROR] [DBInit] [Database connection] Too many keys specified; max 64 keys allowed
+2025-03-31T06:43:08.089Z [INFO] [ServerInit] [N/A] Server is running on port 7000
+2025-03-31T06:43:08.240Z [ERROR] [DBInit] [Database connection] Too many keys specified; max 64 keys allowed
+2025-03-31T06:43:09.327Z [INFO] [ServerInit] [N/A] Server is running on port 7000
+2025-03-31T06:43:09.450Z [ERROR] [DBInit] [Database connection] Too many keys specified; max 64 keys allowed
+2025-03-31T06:47:03.333Z [INFO] [ServerInit] [N/A] Server is running on port 7000
+2025-03-31T06:47:03.453Z [ERROR] [DBInit] [Database connection] Too many keys specified; max 64 keys allowed
+2025-03-31T06:47:05.578Z [INFO] [ServerInit] [N/A] Server is running on port 7000
+2025-03-31T06:47:05.700Z [ERROR] [DBInit] [Database connection] Too many keys specified; max 64 keys allowed
+2025-03-31T07:01:42.106Z [INFO] [ServerInit] [N/A] Server is running on port 7000
+2025-03-31T07:01:42.191Z [ERROR] [DBInit] [Database connection] Too many keys specified; max 64 keys allowed
+2025-03-31T07:01:45.604Z [INFO] [ServerInit] [N/A] Server is running on port 7000
+2025-03-31T07:01:45.694Z [ERROR] [DBInit] [Database connection] Too many keys specified; max 64 keys allowed
+2025-03-31T09:49:49.868Z [INFO] [ServerInit] [N/A] Server is running on port 7000
+2025-03-31T09:49:50.165Z [ERROR] [DBInit] [Database connection] Too many keys specified; max 64 keys allowed
+2025-03-31T09:50:03.695Z [INFO] [RequestLogger] [GET /favicon.ico] Incoming request: GET /favicon.ico
+2025-03-31T09:57:09.703Z [INFO] [ServerInit] [N/A] Server is running on port 7000
+2025-03-31T09:57:09.787Z [ERROR] [DBInit] [Database connection] Too many keys specified; max 64 keys allowed
+2025-03-31T09:57:15.736Z [INFO] [ServerInit] [N/A] Server is running on port 7000
+2025-03-31T09:57:15.817Z [ERROR] [DBInit] [Database connection] Too many keys specified; max 64 keys allowed
+2025-03-31T09:57:18.509Z [INFO] [ServerInit] [N/A] Server is running on port 7000
+2025-03-31T09:57:18.593Z [ERROR] [DBInit] [Database connection] Too many keys specified; max 64 keys allowed
+2025-03-31T09:57:19.980Z [INFO] [ServerInit] [N/A] Server is running on port 7000
+2025-03-31T09:57:20.064Z [ERROR] [DBInit] [Database connection] Too many keys specified; max 64 keys allowed
+2025-03-31T09:57:28.497Z [INFO] [ServerInit] [N/A] Server is running on port 7000
+2025-03-31T09:57:28.583Z [ERROR] [DBInit] [Database connection] Too many keys specified; max 64 keys allowed
+2025-03-31T09:57:40.390Z [INFO] [ServerInit] [N/A] Server is running on port 7000
+2025-03-31T09:57:40.476Z [ERROR] [DBInit] [Database connection] Too many keys specified; max 64 keys allowed
+2025-03-31T09:57:46.449Z [INFO] [ServerInit] [N/A] Server is running on port 7000
+2025-03-31T09:57:46.535Z [ERROR] [DBInit] [Database connection] Too many keys specified; max 64 keys allowed
+2025-03-31T09:57:49.874Z [INFO] [ServerInit] [N/A] Server is running on port 7000
+2025-03-31T09:57:49.958Z [ERROR] [DBInit] [Database connection] Too many keys specified; max 64 keys allowed
+2025-03-31T09:57:52.668Z [INFO] [ServerInit] [N/A] Server is running on port 7000
+2025-03-31T09:57:52.770Z [ERROR] [DBInit] [Database connection] Too many keys specified; max 64 keys allowed
+2025-03-31T09:58:00.080Z [INFO] [ServerInit] [N/A] Server is running on port 7000
+2025-03-31T09:58:00.166Z [ERROR] [DBInit] [Database connection] Too many keys specified; max 64 keys allowed
+2025-03-31T09:58:22.337Z [INFO] [ServerInit] [N/A] Server is running on port 7000
+2025-03-31T09:58:22.420Z [ERROR] [DBInit] [Database connection] Too many keys specified; max 64 keys allowed
+2025-03-31T09:58:35.367Z [INFO] [ServerInit] [N/A] Server is running on port 7000
+2025-03-31T09:58:35.450Z [ERROR] [DBInit] [Database connection] Too many keys specified; max 64 keys allowed
+2025-03-31T09:58:39.085Z [INFO] [ServerInit] [N/A] Server is running on port 7000
+2025-03-31T09:58:39.168Z [ERROR] [DBInit] [Database connection] Too many keys specified; max 64 keys allowed
+2025-03-31T09:58:46.512Z [INFO] [ServerInit] [N/A] Server is running on port 7000
+2025-03-31T09:58:46.593Z [ERROR] [DBInit] [Database connection] Too many keys specified; max 64 keys allowed
+2025-03-31T09:59:43.204Z [INFO] [ServerInit] [N/A] Server is running on port 7000
+2025-03-31T09:59:43.322Z [ERROR] [DBInit] [Database connection] Too many keys specified; max 64 keys allowed
+2025-03-31T09:59:50.977Z [INFO] [ServerInit] [N/A] Server is running on port 7000
+2025-03-31T09:59:51.061Z [ERROR] [DBInit] [Database connection] Too many keys specified; max 64 keys allowed
+2025-03-31T09:59:57.425Z [INFO] [ServerInit] [N/A] Server is running on port 7000
+2025-03-31T09:59:57.508Z [ERROR] [DBInit] [Database connection] Too many keys specified; max 64 keys allowed
+2025-03-31T10:00:16.639Z [INFO] [ServerInit] [N/A] Server is running on port 7000
+2025-03-31T10:00:16.766Z [ERROR] [DBInit] [Database connection] Too many keys specified; max 64 keys allowed
+2025-03-31T10:00:21.388Z [INFO] [ServerInit] [N/A] Server is running on port 7000
+2025-03-31T10:00:21.464Z [ERROR] [DBInit] [Database connection] Too many keys specified; max 64 keys allowed
+2025-03-31T10:00:29.560Z [INFO] [ServerInit] [N/A] Server is running on port 7000
+2025-03-31T10:00:29.681Z [ERROR] [DBInit] [Database connection] Too many keys specified; max 64 keys allowed
+2025-03-31T10:00:38.129Z [INFO] [ServerInit] [N/A] Server is running on port 7000
+2025-03-31T10:00:38.220Z [ERROR] [DBInit] [Database connection] Too many keys specified; max 64 keys allowed
+2025-03-31T10:00:40.910Z [INFO] [ServerInit] [N/A] Server is running on port 7000
+2025-03-31T10:00:40.998Z [ERROR] [DBInit] [Database connection] Too many keys specified; max 64 keys allowed
+2025-03-31T10:00:44.019Z [INFO] [ServerInit] [N/A] Server is running on port 7000
+2025-03-31T10:00:44.099Z [ERROR] [DBInit] [Database connection] Too many keys specified; max 64 keys allowed
+2025-03-31T10:05:27.351Z [INFO] [ServerInit] [N/A] Server is running on port 7000
+2025-03-31T10:05:27.433Z [ERROR] [DBInit] [Database connection] Too many keys specified; max 64 keys allowed
+2025-03-31T10:06:06.400Z [INFO] [ServerInit] [N/A] Server is running on port 7000
+2025-03-31T10:06:06.481Z [ERROR] [DBInit] [Database connection] Too many keys specified; max 64 keys allowed
+2025-03-31T10:07:33.327Z [INFO] [ServerInit] [N/A] Server is running on port 7000
+2025-03-31T10:07:33.412Z [ERROR] [DBInit] [Database connection] Too many keys specified; max 64 keys allowed
+2025-03-31T11:27:44.888Z [INFO] [ServerInit] [N/A] Server is running on port 7000
+2025-03-31T11:27:45.113Z [ERROR] [DBInit] [Database connection] Too many keys specified; max 64 keys allowed

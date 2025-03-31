@@ -1,6 +1,8 @@
 import { db } from '../index.js';
 import { DataTypes } from 'sequelize';
 
+//add user model
+
 export const User = db.define(
   'users',
   {
