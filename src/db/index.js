@@ -1,6 +1,8 @@
 import {Sequelize} from 'sequelize';
 
- export const db =new Sequelize('my_database','new','new@71',{
+
+//create sequelize instance 
+ export const db =new Sequelize('google','new','new@71',{
     host:'localhost',
     dialect:'mysql'
 });

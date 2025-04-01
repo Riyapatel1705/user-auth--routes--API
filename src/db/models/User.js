@@ -1,6 +1,8 @@
 import { db } from '../index.js';
 import { DataTypes } from 'sequelize';
 
+//add user model
+
 export const User = db.define(
   'users',
   {
@@ -27,7 +29,7 @@ export const User = db.define(
     },
     password: {
       type: DataTypes.STRING,
-      allowNull: false,
+      allowNull: true,
     },
     updated_by: {
       type: DataTypes.STRING,
