@@ -1,37 +1,40 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import { User } from '../db/models/User.js';
-import { checkEmailExists, checkUsernameExists, validateEmail, validatePassword, validateUsername } from '../utils/Validation.js';
+import {User} from '../db/models/User.js';
+import { validateEmail,validateUsername,validatePassword,validatePhone,checkEmailExists,checkUsernameExists } from '../utils/validation.js';
 
-// Register user
-export const register = async (req, res) => {
-    const { first_name, last_name, email, password } = req.body;
+//register user
+export const register=async(req,res)=>{
+    const{first_name,last_name,email,password,phone,gender,city,state,country,pin_code,created_by}=req.body;
 
-    if (!validateUsername(first_name, last_name)) {
-        return res.status(400).json({ error: 'Username must be at least 3 characters long and contain only letters and numbers.' });
+    if(!validateUsername(first_name,last_name)){
+        return res.status(400).json({error:"Username must be at least 3 characters long and only contains letters"});
     }
-    if (!validatePassword(password)) {
-        return res.status(400).json({ error: 'Password must be at least 6 characters long and contain at least one number and one special character.' });
+    if(!validatePassword(password)){
+        return res.status(400).json({error:"password must be at least 6 characters long and contain at least one number and one special character"});
     }
-    if (!validateEmail(email)) {
+    if(!validateEmail(email)){
         return res.status(400).json({ error: 'Email format is incorrect.' });
     }
+    if(!validatePhone(phone)){
+        return res.status(400).json({message:"phone no is invalid!"});
+    }
 
-    try {
-        const usernameExists = await checkUsernameExists(first_name, last_name);
-        if (usernameExists) {
+    try{
+        const usernameExists=await checkUsernameExists(first_name,last_name);
+        if(usernameExists){
             return res.status(400).json({ error: 'User already exists.' });
         }
 
-        const emailExists = await checkEmailExists(email);
-        if (emailExists) {
+        const emailExists=await checkEmailExists(email);
+        if(emailExists){
             return res.status(400).json({ error: "This email's user already exists!" });
         }
 
-        const hashedPassword = await bcrypt.hash(password, 10);
-        console.log('Hashed password:', hashedPassword);
+        const hashedPassword=await bcrypt.hash(password,10);
+        console.log('Hashed password:',hashedPassword);
 
-        const result= await User.create({first_name,last_name,email,password:hashedPassword})
+        const result= await User.create({first_name,last_name,email,password:hashedPassword,phone,gender,city,state,country,pin_code,created_by});
         if(result){
             res.status(200).json({message:'user created successfully!'});
         }
@@ -43,7 +46,7 @@ export const register = async (req, res) => {
 }
 };
 
-// Login user
+//login user
 export const login = async (req, res) => {
     const { email, password } = req.body;
 

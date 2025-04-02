@@ -9,5 +9,4 @@ UserRouter.put('/api/update/:id',Authorization,update);
 //delete user Route
 UserRouter.delete('/api/delete/:id',Authorization,deleteUser);
 
-
 export { UserRouter };
