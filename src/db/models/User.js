@@ -1,13 +1,14 @@
-import { db } from '../index.js';
-import { DataTypes, Sequelize } from 'sequelize';
+import { db } from "../index.js";
+import { DataTypes, Sequelize } from "sequelize";
 
 export const User = db.define(
-  'users',
-  { id:{
-    type:DataTypes.INTEGER,
-    autoIncrement:true,
-    primaryKey:true,
-  },
+  "users",
+  {
+    id: {
+      type: DataTypes.INTEGER,
+      autoIncrement: true,
+      primaryKey: true,
+    },
     first_name: {
       type: DataTypes.STRING,
       allowNull: false,
@@ -19,34 +20,33 @@ export const User = db.define(
     email: {
       type: DataTypes.STRING,
       allowNull: false,
-      unique:true,
+      unique: true,
       validate: {
         isEmail: true, // checks for a valid email
         isDomainValid(value) {
           // Custom domain validation for '.com'
-          if (!value.endsWith('.com')) {
-            throw new Error('Email must end with .com');
+          if (!value.endsWith(".com")) {
+            throw new Error("Email must end with .com");
           }
-        }
-      }
+        },
+      },
     },
-    password:{
-        type:DataTypes.STRING,
-        allowNull:false
-
+    password: {
+      type: DataTypes.STRING,
+      allowNull: false,
     },
     phone: {
       type: DataTypes.STRING, // Changed from INTEGER to STRING to accommodate various formats
       allowNull: false,
-      unique:true,
+      unique: true,
     },
     gender: {
       type: DataTypes.STRING,
       allowNull: false,
-      defaultValue: 'Female',
+      defaultValue: "Female",
       validate: {
-        isIn: [['Male', 'Female']] // checks for allowed values
-      }
+        isIn: [["Male", "Female"]], // checks for allowed values
+      },
     },
     city: {
       type: DataTypes.STRING,
@@ -64,14 +64,9 @@ export const User = db.define(
       type: DataTypes.INTEGER,
       allowNull: false,
     },
-    created_at: {
-      type: DataTypes.DATE,
-      defaultValue: Sequelize.NOW, // Use Sequelize.NOW to get the current date/time
-      allowNull: false,
-    },
+
     created_by: {
       type: DataTypes.STRING,
-      defaultValue: 'Admin',
     },
     updated_at: {
       type: DataTypes.DATE,
@@ -85,6 +80,6 @@ export const User = db.define(
   },
   {
     timestamps: false,
-    tableName: 'users',
-  }
+    tableName: "users",
+  },
 );
