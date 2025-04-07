@@ -9,12 +9,6 @@ export const update = async (req, res) => {
     last_name,
     email,
     password,
-    phone,
-    gender,
-    city,
-    state,
-    country,
-    pin_code,
     updated_by,
   } = req.body;
   try {
@@ -28,12 +22,6 @@ export const update = async (req, res) => {
       last_name,
       email,
       password,
-      phone,
-      gender,
-      city,
-      state,
-      country,
-      pin_code,
       updated_by,
     });
     res.status(200).json({ message: "User updated successfully!" });
