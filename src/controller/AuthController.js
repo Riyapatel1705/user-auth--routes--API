@@ -2,36 +2,24 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { User } from "../db/models/User.js";
 import {
-  validateEmail,
-  validateUsername,
-  validatePassword,
-  validatePhone,
   checkEmailExists,
   checkUsernameExists,
+  validateEmail,
+  validatePassword,
+  validateUsername,
+  sendOTPEmail,
 } from "../utils/validation.js";
 
-//register user
+// Register user
 export const register = async (req, res) => {
-  const {
-    first_name,
-    last_name,
-    email,
-    password,
-    phone,
-    gender,
-    city,
-    state,
-    country,
-    pin_code,
-    created_by,
-  } = req.body;
+  const { first_name, last_name, email, password } = req.body;
 
   if (!validateUsername(first_name, last_name)) {
     return res
       .status(400)
       .json({
         error:
-          "Username must be at least 3 characters long and only contains letters",
+          "Username must be at least 3 characters long and contain only letters and numbers.",
       });
   }
   if (!validatePassword(password)) {
@@ -39,14 +27,11 @@ export const register = async (req, res) => {
       .status(400)
       .json({
         error:
-          "password must be at least 6 characters long and contain at least one number and one special character",
+          "Password must be at least 6 characters long and contain at least one number and one special character.",
       });
   }
   if (!validateEmail(email)) {
     return res.status(400).json({ error: "Email format is incorrect." });
-  }
-  if (!validatePhone(phone)) {
-    return res.status(400).json({ message: "phone no is invalid!" });
   }
 
   try {
@@ -70,13 +55,6 @@ export const register = async (req, res) => {
       last_name,
       email,
       password: hashedPassword,
-      phone,
-      gender,
-      city,
-      state,
-      country,
-      pin_code,
-      created_by,
     });
     if (result) {
       res.status(200).json({ message: "user created successfully!" });
@@ -88,7 +66,8 @@ export const register = async (req, res) => {
   }
 };
 
-//login user
+// Login user
+
 export const login = async (req, res) => {
   const { email, password } = req.body;
 
@@ -96,22 +75,129 @@ export const login = async (req, res) => {
     const user = await User.findOne({ where: { email } });
 
     if (!user) {
-      return res.status(400).json({ error: "Invalid email or password" });
+      return res.status(404).json({ error: "User not found" });
     }
 
-    const isMatch = await bcrypt.compare(password, user.password);
+    const validPassword = await bcrypt.compare(password, user.password);
 
-    if (!isMatch) {
-      return res.status(400).json({ error: "Invalid email or password" });
+    if (!validPassword) {
+      return res.status(400).json({ error: "Invalid password" });
     }
 
     const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, {
       expiresIn: "1h",
     });
 
-    res.json({ token });
+    res.status(200).json({
+      message: "Login successful",
+      token,
+    });
+  } catch (error) {
+    console.error("Login Error:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+
+//forgetPassword Logic
+export const forgetPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    const user = await User.findOne({ where: { email } });
+    if (!user) return res.status(404).json({ message: "User not found!" });
+
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    await User.update({ reset_password_otp: otp }, { where: { email } });
+
+    // Fixed sendOTPEmail call
+    await sendOTPEmail({
+      to: email,
+      subject: "Password Reset OTP",
+      text: `Your OTP is: ${otp}`,
+      html: `<p>Your OTP is: <strong>${otp}</strong></p>`,
+    });
+
+    res.json({ message: "OTP sent to your email" });
+  } catch (error) {
+    console.error("Forget Password Error:", error);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
+//reset password
+export const resetPassword = async (req, res) => {
+  try {
+    const { reset_password_otp } = req.query;
+    const { newPassword, confirmPassword } = req.body;
+
+    if (!reset_password_otp) {
+      return res.status(400).json({ message: "OTP is required in query!" });
+    }
+
+    if (!newPassword || !confirmPassword) {
+      return res.status(400).json({ message: "Both passwords are required" });
+    }
+    // STEP 1 : Validate Password
+    if (newPassword !== confirmPassword) {
+      return res.status(400).json({ message: "Passwords do not match" });
+    }
+
+    const user = await User.findOne({
+      where: { reset_password_otp },
+    });
+
+    if (!user) {
+      return res.status(400).json({ message: "Invalid or expired OTP!" });
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    // STEP 3 : Update User's Password
+    await User.update(
+      {
+        password: hashedPassword,
+        reset_password_otp: null,
+        updated_at: new Date(),
+      },
+      { where: { id: user.id } },
+    );
+
+    res.json({ message: "Password reset successful" });
+  } catch (error) {
+    console.error("Reset Password Error:", error);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
+//get user details
+export const getUser = async (req, res) => {
+  try {
+    console.log("Decoded User:", req.user);
+
+    const userId = req.user?.id;
+
+    if (!userId) {
+      console.error("No user ID in decoded token");
+      return res.status(401).json({ error: "Unauthorized: No user ID found" });
+    }
+
+    console.log("Fetching user with ID:", userId);
+
+    // Make sure User is properly imported and initialized
+    const user = await User.findByPk(userId, {
+      attributes: ["id", "first_name", "last_name", "email"],
+    });
+
+    if (!user) {
+      console.error("User not found in database");
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    console.log("User Found:", user);
+
+    res.json({ user });
   } catch (err) {
-    console.error("Error during login:", err);
-    res.status(500).json({ error: "Database error" });
+    console.error("Error fetching user:", err.message, err.stack);
+    res.status(500).json({ error: "Server error" });
   }
 };

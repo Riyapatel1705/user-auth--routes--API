@@ -4,19 +4,7 @@ import { User } from "../db/models/User.js";
 
 export const update = async (req, res) => {
   const { id } = req.params;
-  const {
-    first_name,
-    last_name,
-    email,
-    password,
-    phone,
-    gender,
-    city,
-    state,
-    country,
-    pin_code,
-    updated_by,
-  } = req.body;
+  const { first_name, last_name, email, password, updated_by } = req.body;
   try {
     const user = await User.findByPk(id);
 
@@ -28,12 +16,6 @@ export const update = async (req, res) => {
       last_name,
       email,
       password,
-      phone,
-      gender,
-      city,
-      state,
-      country,
-      pin_code,
       updated_by,
     });
     res.status(200).json({ message: "User updated successfully!" });
