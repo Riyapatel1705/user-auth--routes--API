@@ -1,174 +1,203 @@
-import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
-import { User } from '../db/models/User.js';
-import { checkEmailExists, checkUsernameExists, validateEmail, validatePassword, validateUsername,sendOTPEmail } from '../utils/validation.js';
-
+import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
+import { User } from "../db/models/User.js";
+import {
+  checkEmailExists,
+  checkUsernameExists,
+  validateEmail,
+  validatePassword,
+  validateUsername,
+  sendOTPEmail,
+} from "../utils/validation.js";
 
 // Register user
 export const register = async (req, res) => {
-    const { first_name, last_name, email, password } = req.body;
+  const { first_name, last_name, email, password } = req.body;
 
-    if (!validateUsername(first_name, last_name)) {
-        return res.status(400).json({ error: 'Username must be at least 3 characters long and contain only letters and numbers.' });
+  if (!validateUsername(first_name, last_name)) {
+    return res
+      .status(400)
+      .json({
+        error:
+          "Username must be at least 3 characters long and contain only letters and numbers.",
+      });
+  }
+  if (!validatePassword(password)) {
+    return res
+      .status(400)
+      .json({
+        error:
+          "Password must be at least 6 characters long and contain at least one number and one special character.",
+      });
+  }
+  if (!validateEmail(email)) {
+    return res.status(400).json({ error: "Email format is incorrect." });
+  }
+
+  try {
+    const usernameExists = await checkUsernameExists(first_name, last_name);
+    if (usernameExists) {
+      return res.status(400).json({ error: "User already exists." });
     }
-    if (!validatePassword(password)) {
-        return res.status(400).json({ error: 'Password must be at least 6 characters long and contain at least one number and one special character.' });
+
+    const emailExists = await checkEmailExists(email);
+    if (emailExists) {
+      return res
+        .status(400)
+        .json({ error: "This email's user already exists!" });
     }
-    if (!validateEmail(email)) {
-        return res.status(400).json({ error: 'Email format is incorrect.' });
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+    console.log("Hashed password:", hashedPassword);
+
+    const result = await User.create({
+      first_name,
+      last_name,
+      email,
+      password: hashedPassword,
+    });
+    if (result) {
+      res.status(200).json({ message: "user created successfully!" });
+    } else {
+      res.status(401).json({ message: "error in creating user" });
     }
-
-    try {
-        const usernameExists = await checkUsernameExists(first_name, last_name);
-        if (usernameExists) {
-            return res.status(400).json({ error: 'User already exists.' });
-        }
-
-        const emailExists = await checkEmailExists(email);
-        if (emailExists) {
-            return res.status(400).json({ error: "This email's user already exists!" });
-        }
-
-        const hashedPassword = await bcrypt.hash(password, 10);
-        console.log('Hashed password:', hashedPassword);
-
-        const result= await User.create({first_name,last_name,email,password:hashedPassword})
-        if(result){
-            res.status(200).json({message:'user created successfully!'});
-        }
-        else {
-            res.status(401).json({message:'error in creating user'});
-        }
-} catch(err){
-    console.error('not able to create user',err);
-}
+  } catch (err) {
+    console.error("not able to create user", err);
+  }
 };
 
 // Login user
-// LOGIN API
+
 export const login = async (req, res) => {
-    const { email, password } = req.body;
+  const { email, password } = req.body;
 
-    try {
-        const user = await User.findOne({ where: { email } });
+  try {
+    const user = await User.findOne({ where: { email } });
 
-        if (!user) {
-            return res.status(404).json({ error: "User not found" });
-        }
-
-        const validPassword = await bcrypt.compare(password, user.password);
-
-        if (!validPassword) {
-            return res.status(400).json({ error: "Invalid password" });
-        }
-
-        const token = jwt.sign(
-            { id: user.id },  
-            process.env.JWT_SECRET,
-            { expiresIn: '1h' }
-        );
-
-        res.status(200).json({
-            message: "Login successful",
-            token
-        });
-
-    } catch (error) {
-        console.error("Login Error:", error);
-        res.status(500).json({ error: "Internal Server Error" });
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
     }
+
+    const validPassword = await bcrypt.compare(password, user.password);
+
+    if (!validPassword) {
+      return res.status(400).json({ error: "Invalid password" });
+    }
+
+    const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, {
+      expiresIn: "1h",
+    });
+
+    res.status(200).json({
+      message: "Login successful",
+      token,
+    });
+  } catch (error) {
+    console.error("Login Error:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
 };
 
-
+//forgetPassword Logic
 export const forgetPassword = async (req, res) => {
-    try {
-        const { email } = req.body;
+  try {
+    const { email } = req.body;
 
-        const user = await User.findOne({ where: { email } });
-        if (!user) return res.status(404).json({ message: "User not found!" });
+    const user = await User.findOne({ where: { email } });
+    if (!user) return res.status(404).json({ message: "User not found!" });
 
-        const otp = Math.floor(100000 + Math.random() * 900000).toString();
-        await User.update({ reset_password_otp: otp }, { where: { email } });
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    await User.update({ reset_password_otp: otp }, { where: { email } });
 
-        // Fixed sendOTPEmail call
-        await sendOTPEmail({
-            to: email,
-            subject: "Password Reset OTP",
-            text: `Your OTP is: ${otp}`,
-            html: `<p>Your OTP is: <strong>${otp}</strong></p>`,
-        });
+    // Fixed sendOTPEmail call
+    await sendOTPEmail({
+      to: email,
+      subject: "Password Reset OTP",
+      text: `Your OTP is: ${otp}`,
+      html: `<p>Your OTP is: <strong>${otp}</strong></p>`,
+    });
 
-        res.json({ message: "OTP sent to your email" });
-
-    } catch (error) {
-        console.error("Forget Password Error:", error);
-        res.status(500).json({ message: "Internal Server Error" });
-    }
+    res.json({ message: "OTP sent to your email" });
+  } catch (error) {
+    console.error("Forget Password Error:", error);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
 };
 
+//reset password
+export const resetPassword = async (req, res) => {
+  try {
+    const { reset_password_otp } = req.query;
+    const { newPassword, confirmPassword } = req.body;
 
-export const resetPassword=async(req,res)=>{
-    try {
-        const{email,otp,newPassword,confirmPassword}=req.body;
-
-        if(newPassword!==confirmPassword){
-            return res.status(400).json({message:"Passwords do not match "});
-        }
-
-        const user= await User.findOne({where:{email,reset_password_otp:otp}});
-
-        if(!user){
-            return res.status(400).json({ message: "Invalid OTP or email" });
-        }
-
-        //hash new password
-        const hashedPassword=await bcrypt.hash(newPassword,10);
-
-        //Update password , clear OTP and set updated_at timestamp
-        await User.update(
-            {
-                password:hashedPassword,
-                reset_password_otp:null,
-                updated_at:new Date()
-            },
-            {where:{email}}
-        );
-        res.json({message:"Password reset successful"});
-    }catch(error){
-        res.status(500).json({message:"Internal server Error"});
+    if (!reset_password_otp) {
+      return res.status(400).json({ message: "OTP is required in query!" });
     }
+
+    if (!newPassword || !confirmPassword) {
+      return res.status(400).json({ message: "Both passwords are required" });
+    }
+    // STEP 1 : Validate Password
+    if (newPassword !== confirmPassword) {
+      return res.status(400).json({ message: "Passwords do not match" });
+    }
+
+    const user = await User.findOne({
+      where: { reset_password_otp },
+    });
+
+    if (!user) {
+      return res.status(400).json({ message: "Invalid or expired OTP!" });
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    // STEP 3 : Update User's Password
+    await User.update(
+      {
+        password: hashedPassword,
+        reset_password_otp: null,
+        updated_at: new Date(),
+      },
+      { where: { id: user.id } },
+    );
+
+    res.json({ message: "Password reset successful" });
+  } catch (error) {
+    console.error("Reset Password Error:", error);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
 };
 
 //get user details
 export const getUser = async (req, res) => {
-    try {
-        console.log("Decoded User:", req.user); 
+  try {
+    console.log("Decoded User:", req.user);
 
-        const userId = req.user?.id;
+    const userId = req.user?.id;
 
-        if (!userId) {
-            console.error("No user ID in decoded token");
-            return res.status(401).json({ error: "Unauthorized: No user ID found" });
-        }
-
-        console.log("Fetching user with ID:", userId);
-
-        // Make sure User is properly imported and initialized
-        const user = await User.findByPk(userId, {
-            attributes: ['id', 'first_name', 'last_name', 'email']
-        });
-
-        if (!user) {
-            console.error("User not found in database");
-            return res.status(404).json({ error: "User not found" });
-        }
-
-        console.log("User Found:", user);
-
-        res.json({ user });
-
-    } catch (err) {
-        console.error("Error fetching user:", err.message, err.stack);
-        res.status(500).json({ error: "Server error" });
+    if (!userId) {
+      console.error("No user ID in decoded token");
+      return res.status(401).json({ error: "Unauthorized: No user ID found" });
     }
+
+    console.log("Fetching user with ID:", userId);
+
+    // Make sure User is properly imported and initialized
+    const user = await User.findByPk(userId, {
+      attributes: ["id", "first_name", "last_name", "email"],
+    });
+
+    if (!user) {
+      console.error("User not found in database");
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    console.log("User Found:", user);
+
+    res.json({ user });
+  } catch (err) {
+    console.error("Error fetching user:", err.message, err.stack);
+    res.status(500).json({ error: "Server error" });
+  }
 };
