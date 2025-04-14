@@ -1,6 +1,6 @@
 import { Sequelize } from "sequelize";
 
-export const db = new Sequelize("update_user", "new", "new@71", {
+export const db = new Sequelize("event_db", "new", "new@71", {
   host: "localhost",
   dialect: "mysql",
 });

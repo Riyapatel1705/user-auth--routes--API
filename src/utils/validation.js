@@ -1,4 +1,5 @@
 import { User } from "../db/models/User.js";
+import { Event } from "../db/models/Event.js";
 
 //email validation
 export const validateEmail = (email) => {
@@ -43,5 +44,15 @@ export const checkUsernameExists = async (first_name, last_name) => {
     return user != null;
   } catch (err) {
     throw new Error("Error checking username:", err.message);
+  }
+};
+
+//check if event already exists or not
+export const checkEventExists = async (name) => {
+  try {
+    const event = await Event.findOne({ where: { name } });
+    return event != null;
+  } catch (err) {
+    throw new Error("Error in checking event:", err.message);
   }
 };

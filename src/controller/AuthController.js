@@ -27,20 +27,16 @@ export const register = async (req, res) => {
   } = req.body;
 
   if (!validateUsername(first_name, last_name)) {
-    return res
-      .status(400)
-      .json({
-        error:
-          "Username must be at least 3 characters long and only contains letters",
-      });
+    return res.status(400).json({
+      error:
+        "Username must be at least 3 characters long and only contains letters",
+    });
   }
   if (!validatePassword(password)) {
-    return res
-      .status(400)
-      .json({
-        error:
-          "password must be at least 6 characters long and contain at least one number and one special character",
-      });
+    return res.status(400).json({
+      error:
+        "password must be at least 6 characters long and contain at least one number and one special character",
+    });
   }
   if (!validateEmail(email)) {
     return res.status(400).json({ error: "Email format is incorrect." });

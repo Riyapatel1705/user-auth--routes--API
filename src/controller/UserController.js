@@ -1,5 +1,4 @@
 import { User } from "../db/models/User.js";
-
 //update user info
 
 export const update = async (req, res) => {
