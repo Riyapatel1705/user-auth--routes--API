@@ -35,39 +35,6 @@ export const User = db.define(
       type: DataTypes.STRING,
       allowNull: false,
     },
-    phone: {
-      type: DataTypes.STRING, // Changed from INTEGER to STRING to accommodate various formats
-      allowNull: false,
-      unique: true,
-    },
-    gender: {
-      type: DataTypes.STRING,
-      allowNull: false,
-      defaultValue: "Female",
-      validate: {
-        isIn: [["Male", "Female"]], // checks for allowed values
-      },
-    },
-    city: {
-      type: DataTypes.STRING,
-      allowNull: true,
-    },
-    state: {
-      type: DataTypes.STRING,
-      allowNull: false,
-    },
-    country: {
-      type: DataTypes.STRING,
-      allowNull: false,
-    },
-    pin_code: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-    },
-
-    created_by: {
-      type: DataTypes.STRING,
-    },
     updated_at: {
       type: DataTypes.DATE,
       defaultValue: Sequelize.NOW, // Correct way to set the current timestamp

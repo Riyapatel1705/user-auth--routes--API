@@ -20,11 +20,6 @@ export const validateUsername = (first_name, last_name) => {
   return regex1.test(first_name) && regex2.test(last_name);
 };
 
-//phone_no validation
-export const validatePhone = (phone) => {
-  const regex = /^[0-9]{10}$/; // This matches exactly 10 digits
-  return regex.test(phone);
-};
 
 //check if the user with same email exists or not
 

@@ -1,21 +1,14 @@
 import express from "express";
-import {
-  updateEvent,
-  deleteEvent,
-  deleteUserEvent,
-} from "../controller/EventController.js";
+import upload from '../middleware/upload.js';
+
 import { Authorization } from "../middleware/Auth.js";
-import { authorizeEventAccess } from "../middleware/EventAuth.js";
+import { deleteEvent, getAllEvents, registerUserEvent, updateEvent } from "../controller/EventController.js";
 
 const EventRouter = express.Router();
 
-EventRouter.put("/api/updateEvent", updateEvent);
-EventRouter.delete("/api/deleteEvent", deleteEvent);
-EventRouter.delete(
-  "/api/deleteUserEvent",
-  Authorization,
-  authorizeEventAccess,
-  deleteUserEvent,
-);
+EventRouter.post("/api/register-event",Authorization,upload.single('file'),registerUserEvent);
+EventRouter.put("/api/update-event",Authorization, updateEvent);
+EventRouter.delete("/api/delete-event",Authorization, deleteEvent);
+EventRouter.get("/api/getall-events",getAllEvents);
 
 export { EventRouter };

@@ -8,13 +8,7 @@ export const update = async (req, res) => {
     last_name,
     email,
     password,
-    phone,
-    gender,
-    city,
-    state,
-    country,
-    pin_code,
-    updated_by,
+    updated_by
   } = req.body;
   try {
     const user = await User.findByPk(id);
@@ -27,13 +21,7 @@ export const update = async (req, res) => {
       last_name,
       email,
       password,
-      phone,
-      gender,
-      city,
-      state,
-      country,
-      pin_code,
-      updated_by,
+      updated_by
     });
     res.status(200).json({ message: "User updated successfully!" });
   } catch (err) {
@@ -60,3 +48,4 @@ export const deleteUser = async (req, res) => {
     res.status(500).json({ message: "Error deleting user" });
   }
 };
+

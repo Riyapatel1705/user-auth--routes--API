@@ -14,19 +14,19 @@ export const Event = db.define(
       type: DataTypes.TEXT,
       allowNull: false,
     },
-    shortDescription: {
+    short_Description: {
       type: DataTypes.TEXT,
       allowNull: false,
     },
-    startDate: {
+    start_Date: {
       type: DataTypes.DATE,
       allowNull: false,
     },
-    endDate: {
+    end_Date: {
       type: DataTypes.DATE,
       allowNull: false,
     },
-    isVirtual: {
+    is_Virtual: {
       type: DataTypes.BOOLEAN,
       defaultValue: false,
     },
@@ -37,13 +37,18 @@ export const Event = db.define(
       },
       allowNull: false,
     },
-    postalCode: {
+    image_Url: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+
+    postal_Code: {
       type: DataTypes.TEXT,
     },
-    contactDetails: {
-      type: DataTypes.JSON, // ✅ Corrected from JSONB (MySQL doesn't support JSONB)
+    contact_Details: {
+      type: DataTypes.JSON, //  Corrected from JSONB (MySQL doesn't support JSONB)
     },
-    organizationName: {
+    organization_Name: {
       type: DataTypes.TEXT,
     },
     price: {
