@@ -2,6 +2,16 @@ import express from "express";
 import { login, register,getUser } from "../controller/AuthController.js";
 import { Authorization } from "../middleware/Auth.js";
 
+import {
+  login,
+  register,
+  getUser,
+  forgetPassword,
+  resetPassword,
+} from "../controller/AuthController.js";
+import { Authorization } from "../middleware/Auth.js";
+
+
 const AuthRouter = express.Router();
 
 AuthRouter.post("/api/register", register);

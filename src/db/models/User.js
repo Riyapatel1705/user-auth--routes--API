@@ -44,6 +44,23 @@ export const User = db.define(
       type: DataTypes.STRING,
       allowNull: true,
     },
+    created_at: {
+      type: DataTypes.DATE,
+      defaultValue: DataTypes.NOW,
+    },
+    updated_at: {
+      type: DataTypes.DATE,
+      defaultValue: DataTypes.NOW,
+    },
+    reset_password_otp: {
+      type: DataTypes.STRING,
+      unique: true,
+      allowNull: true,
+      validate: {
+        isNumeric: true,
+        len: [6, 6],
+      },
+    },
   },
   {
     timestamps: false,

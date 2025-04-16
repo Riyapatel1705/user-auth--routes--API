@@ -9,9 +9,13 @@ import {
   validatePassword,
   checkEmailExists,
   checkUsernameExists,
+  validateEmail,
+  validatePassword,
+  validateUsername,
+  sendOTPEmail,
 } from "../utils/validation.js";
 
-//register user
+// Register user
 export const register = async (req, res) => {
   const {
     first_name,
@@ -21,6 +25,7 @@ export const register = async (req, res) => {
   } = req.body;
 
   if (!validateUsername(first_name, last_name)) {
+
     return res.status(400).json({
       message:
         "Username must be at least 3 characters long and only contains letters",
@@ -31,6 +36,22 @@ export const register = async (req, res) => {
       message:
         "password must be at least 6 characters long and contain at least one number and one special character",
     });
+
+    return res
+      .status(400)
+      .json({
+        error:
+          "Username must be at least 3 characters long and contain only letters and numbers.",
+      });
+  }
+  if (!validatePassword(password)) {
+    return res
+      .status(400)
+      .json({
+        error:
+          "Password must be at least 6 characters long and contain at least one number and one special character.",
+      });
+
   }
   if (!validateEmail(email)) {
     return res.status(400).json({ message: "Email format is incorrect." });
@@ -69,7 +90,8 @@ export const register = async (req, res) => {
   }
 };
 
-//login user
+// Login user
+
 export const login = async (req, res) => {
   const { email, password } = req.body;
 
@@ -80,7 +102,7 @@ export const login = async (req, res) => {
       return res.status(400).json({ message: "Invalid email or password" });
     }
 
-    const isMatch = await bcrypt.compare(password, user.password);
+    const validPassword = await bcrypt.compare(password, user.password);
 
     if (!isMatch) {
       return res.status(400).json({ message: "Invalid email or password" });
