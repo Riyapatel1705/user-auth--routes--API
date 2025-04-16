@@ -25,13 +25,10 @@ export const validateUsername = (first_name, last_name) => {
   return regex1.test(first_name) && regex2.test(last_name);
 };
 
-<<<<<<< HEAD
-
 //check if the user with same email exists or not
 
-=======
+
 // Check if Email Exists
->>>>>>> 645c11760ef38e20501130da68d77cd6799c94ba
 export const checkEmailExists = async (email) => {
   try {
     const user = await User.findOne({ where: { email } });
