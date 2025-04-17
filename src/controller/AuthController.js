@@ -1,7 +1,7 @@
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { User } from "../db/models/User.js";
-import dotenv from 'dotenv';
+import dotenv from "dotenv";
 dotenv.config();
 import {
   validateEmail,
@@ -9,23 +9,13 @@ import {
   validatePassword,
   checkEmailExists,
   checkUsernameExists,
-  validateEmail,
-  validatePassword,
-  validateUsername,
-  sendOTPEmail,
 } from "../utils/validation.js";
 
 // Register user
 export const register = async (req, res) => {
-  const {
-    first_name,
-    last_name,
-    email,
-    password
-  } = req.body;
+  const { first_name, last_name, email, password } = req.body;
 
   if (!validateUsername(first_name, last_name)) {
-
     return res.status(400).json({
       message:
         "Username must be at least 3 characters long and only contains letters",
@@ -36,27 +26,10 @@ export const register = async (req, res) => {
       message:
         "password must be at least 6 characters long and contain at least one number and one special character",
     });
-
-    return res
-      .status(400)
-      .json({
-        error:
-          "Username must be at least 3 characters long and contain only letters and numbers.",
-      });
-  }
-  if (!validatePassword(password)) {
-    return res
-      .status(400)
-      .json({
-        error:
-          "Password must be at least 6 characters long and contain at least one number and one special character.",
-      });
-
   }
   if (!validateEmail(email)) {
     return res.status(400).json({ message: "Email format is incorrect." });
   }
-  
 
   try {
     const usernameExists = await checkUsernameExists(first_name, last_name);
@@ -78,7 +51,7 @@ export const register = async (req, res) => {
       first_name,
       last_name,
       email,
-      password: hashedPassword
+      password: hashedPassword,
     });
     if (result) {
       res.status(200).json({ message: "user created successfully!" });
@@ -102,7 +75,7 @@ export const login = async (req, res) => {
       return res.status(400).json({ message: "Invalid email or password" });
     }
 
-    const validPassword = await bcrypt.compare(password, user.password);
+    const isMatch = await bcrypt.compare(password, user.password);
 
     if (!isMatch) {
       return res.status(400).json({ message: "Invalid email or password" });
@@ -119,8 +92,7 @@ export const login = async (req, res) => {
   }
 };
 
-
-//get user deatils 
+//get user deatils
 export const getUser = async (req, res) => {
   try {
     console.log("Decoded User:", req.user);

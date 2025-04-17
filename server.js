@@ -8,22 +8,21 @@ import { db } from "./src/db/index.js";
 import multer from "multer";
 import fs from "fs";
 import path from "path";
-import { fileURLToPath } from 'url'; // Import fileURLToPath to use in ES modules
+import { fileURLToPath } from "url"; // Import fileURLToPath to use in ES modules
 
 dotenv.config();
 
 const app = express();
-app.use(cors({ origin: "http://localhost:3000", credentials: true }
-));
+app.use(cors({ origin: "http://localhost:3000", credentials: true }));
 app.use(express.json());
-app.use('/uploads', express.static('uploads'));
-app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
+app.use("/uploads", express.static("uploads"));
+app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 
 // Get the directory name equivalent for ES modules
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 // Serve static files from 'uploads' directory
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // Routes
 app.use(AuthRouter);

@@ -14,6 +14,10 @@ export const Event = db.define(
       type: DataTypes.TEXT,
       allowNull: false,
     },
+    category: {
+      type: DataTypes.TEXT,
+      allowNull: false,
+    },
     short_Description: {
       type: DataTypes.TEXT,
       allowNull: false,
@@ -35,6 +39,14 @@ export const Event = db.define(
       validate: {
         len: [5, 250],
       },
+      allowNull: false,
+    },
+    city: {
+      type: DataTypes.TEXT,
+      allowNull: false,
+    },
+    state: {
+      type: DataTypes.TEXT,
       allowNull: false,
     },
     image_Url: {
