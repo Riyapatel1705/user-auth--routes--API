@@ -1,13 +1,14 @@
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { User } from "../db/models/User.js";
+import dotenv from "dotenv";
+dotenv.config();
 import {
+  validateEmail,
+  validateUsername,
+  validatePassword,
   checkEmailExists,
   checkUsernameExists,
-  validateEmail,
-  validatePassword,
-  validateUsername,
-  sendOTPEmail,
 } from "../utils/validation.js";
 
 // Register user
@@ -15,36 +16,32 @@ export const register = async (req, res) => {
   const { first_name, last_name, email, password } = req.body;
 
   if (!validateUsername(first_name, last_name)) {
-    return res
-      .status(400)
-      .json({
-        error:
-          "Username must be at least 3 characters long and contain only letters and numbers.",
-      });
+    return res.status(400).json({
+      message:
+        "Username must be at least 3 characters long and only contains letters",
+    });
   }
   if (!validatePassword(password)) {
-    return res
-      .status(400)
-      .json({
-        error:
-          "Password must be at least 6 characters long and contain at least one number and one special character.",
-      });
+    return res.status(400).json({
+      message:
+        "password must be at least 6 characters long and contain at least one number and one special character",
+    });
   }
   if (!validateEmail(email)) {
-    return res.status(400).json({ error: "Email format is incorrect." });
+    return res.status(400).json({ message: "Email format is incorrect." });
   }
 
   try {
     const usernameExists = await checkUsernameExists(first_name, last_name);
     if (usernameExists) {
-      return res.status(400).json({ error: "User already exists." });
+      return res.status(400).json({ message: "User already exists." });
     }
 
     const emailExists = await checkEmailExists(email);
     if (emailExists) {
       return res
         .status(400)
-        .json({ error: "This email's user already exists!" });
+        .json({ message: "This email's user already exists!" });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -75,101 +72,27 @@ export const login = async (req, res) => {
     const user = await User.findOne({ where: { email } });
 
     if (!user) {
-      return res.status(404).json({ error: "User not found" });
+      return res.status(400).json({ message: "Invalid email or password" });
     }
 
-    const validPassword = await bcrypt.compare(password, user.password);
+    const isMatch = await bcrypt.compare(password, user.password);
 
-    if (!validPassword) {
-      return res.status(400).json({ error: "Invalid password" });
+    if (!isMatch) {
+      return res.status(400).json({ message: "Invalid email or password" });
     }
 
     const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, {
       expiresIn: "1h",
     });
 
-    res.status(200).json({
-      message: "Login successful",
-      token,
-    });
-  } catch (error) {
-    console.error("Login Error:", error);
-    res.status(500).json({ error: "Internal Server Error" });
+    res.json({ token });
+  } catch (err) {
+    console.error("Error during login:", err);
+    res.status(500).json({ message: "Database error" });
   }
 };
 
-//forgetPassword Logic
-export const forgetPassword = async (req, res) => {
-  try {
-    const { email } = req.body;
-
-    const user = await User.findOne({ where: { email } });
-    if (!user) return res.status(404).json({ message: "User not found!" });
-
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    await User.update({ reset_password_otp: otp }, { where: { email } });
-
-    // Fixed sendOTPEmail call
-    await sendOTPEmail({
-      to: email,
-      subject: "Password Reset OTP",
-      text: `Your OTP is: ${otp}`,
-      html: `<p>Your OTP is: <strong>${otp}</strong></p>`,
-    });
-
-    res.json({ message: "OTP sent to your email" });
-  } catch (error) {
-    console.error("Forget Password Error:", error);
-    res.status(500).json({ message: "Internal Server Error" });
-  }
-};
-
-//reset password
-export const resetPassword = async (req, res) => {
-  try {
-    const { reset_password_otp } = req.query;
-    const { newPassword, confirmPassword } = req.body;
-
-    if (!reset_password_otp) {
-      return res.status(400).json({ message: "OTP is required in query!" });
-    }
-
-    if (!newPassword || !confirmPassword) {
-      return res.status(400).json({ message: "Both passwords are required" });
-    }
-    // STEP 1 : Validate Password
-    if (newPassword !== confirmPassword) {
-      return res.status(400).json({ message: "Passwords do not match" });
-    }
-
-    const user = await User.findOne({
-      where: { reset_password_otp },
-    });
-
-    if (!user) {
-      return res.status(400).json({ message: "Invalid or expired OTP!" });
-    }
-
-    const hashedPassword = await bcrypt.hash(newPassword, 10);
-
-    // STEP 3 : Update User's Password
-    await User.update(
-      {
-        password: hashedPassword,
-        reset_password_otp: null,
-        updated_at: new Date(),
-      },
-      { where: { id: user.id } },
-    );
-
-    res.json({ message: "Password reset successful" });
-  } catch (error) {
-    console.error("Reset Password Error:", error);
-    res.status(500).json({ message: "Internal Server Error" });
-  }
-};
-
-//get user details
+//get user deatils
 export const getUser = async (req, res) => {
   try {
     console.log("Decoded User:", req.user);

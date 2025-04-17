@@ -35,7 +35,6 @@ export const User = db.define(
       type: DataTypes.STRING,
       allowNull: false,
     },
-
     updated_at: {
       type: DataTypes.DATE,
       defaultValue: Sequelize.NOW, // Correct way to set the current timestamp
