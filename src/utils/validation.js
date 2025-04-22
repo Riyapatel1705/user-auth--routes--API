@@ -19,9 +19,8 @@ export const validatePassword = (password) => {
 
 // Username Validation
 export const validateUsername = (first_name, last_name) => {
-  const regex1 = /^[a-zA-Z]{3,}$/;
-  const regex2 = /^[a-zA-Z]{4,}$/;
-  return regex1.test(first_name) && regex2.test(last_name);
+  const nameRegex=/^[a-zA-Z\s-]{3,}$/;
+  return nameRegex.test(first_name) && nameRegex.test(last_name);
 };
 
 //check if the user with same email exists or not
@@ -32,6 +31,7 @@ export const checkEmailExists = async (email) => {
     return user !== null;
   } catch (err) {
     throw new Error("Error checking email: " + err.message);
+    console.error("Error checking email:",err.message);
   }
 };
 
@@ -43,6 +43,7 @@ export const checkUsernameExists = async (first_name, last_name) => {
     return user != null;
   } catch (err) {
     throw new Error("Error checking username:", err.message);
+    console.error("Error checking username");
   }
 };
 
@@ -55,3 +56,9 @@ export const checkEventExists = async (name) => {
     throw new Error("Error in checking event:", err.message);
   }
 };
+
+// Utility to validate date format strictly (yyyy-mm-dd)
+export const isValidDate = (dateStr) => /^\d{4}-\d{2}-\d{2}$/.test(dateStr) && !isNaN(Date.parse(dateStr));
+
+// Escape wildcard characters for LIKE
+export const escapeLike = (str) => str.replace(/[%_]/g, "\\$&");

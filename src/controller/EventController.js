@@ -1,10 +1,9 @@
-import { Event } from "../db/models/Event.js";
-import { checkEventExists } from "../utils/validation.js";
-import { Sequelize } from "sequelize";
-import { Op } from "sequelize";
-import path from "path";
-import multer from "multer";
 import env from "dotenv";
+import multer from "multer";
+import path from "path";
+import { Op, fn, col, where } from 'sequelize';
+import { Event } from "../db/models/Event.js";
+import { checkEventExists,isValidDate,escapeLike } from "../utils/validation.js";
 
 env.config();
 
@@ -22,34 +21,27 @@ const upload = multer({ storage: storage }).single("eventImage"); // 'eventImage
 
 // Create event function
 export const registerUserEvent = async (req, res) => {
-  const {
-    name,
-    category,
-    short_Description,
-    start_Date,
-    end_Date,
-    is_Virtual,
-    address,
-    city,
-    state,
-    postal_Code,
-    contact_Details,
-    organization_Name,
-    price,
-  } = req.body;
+  const data = req.body;
 
-  const missingFields = [];
-  if (!name) missingFields.push("name is a required field!");
-  if (!category) missingFields.push("category is a required field!");
-  if (!start_Date) missingFields.push("start_Date is a required field!");
-  if (!end_Date) missingFields.push("end_Date is a required field!");
-  if (!address) missingFields.push("address is a required field!");
-  if (!contact_Details)
-    missingFields.push("contact_Details is a required field!");
-  if (!price) missingFields.push("price is a required field!");
+  const requiredFields = [
+    "name", "category", "start_date", "end_date",
+    "address", "contact_details", "organization_name", "price"
+  ];
+
+  const {
+    name, category, short_description, start_date, end_date,
+    is_virtual, address, city, state, postal_code,
+    contact_details, organization_name, price
+  } = data;
+
+  const missingFields = requiredFields.filter(
+    (field) => data[field] === undefined || data[field] === null || data[field] === ""
+  );
 
   if (missingFields.length > 0) {
-    return res.status(400).json({ errors: missingFields });
+    return res.status(400).send({
+      message: `Please fill all the required fields: ${missingFields.join(", ")}`,
+    });
   }
 
   const userId = req.user?.id;
@@ -59,44 +51,29 @@ export const registerUserEvent = async (req, res) => {
 
   const event = await checkEventExists(name);
   if (event) {
-    return res
-      .status(400)
-      .json({ message: "Event with this name already exists!" });
+    return res.status(400).json({ message: "Event with this name already exists!" });
   }
 
-  const image_Url = req.file
-    ? `${process.env.NGROK_URL}/uploads/${req.file.filename}`
-    : null;
-
   try {
+    
+    const image_url = req.file ? `public/uploads/${req.file.filename}` : null;
+
     const create = await Event.create({
-      name,
-      category,
-      short_Description,
-      start_Date,
-      end_Date,
-      is_Virtual,
-      address,
-      city,
-      state,
-      postal_Code,
-      contact_Details,
-      organization_Name,
-      price,
-      image_Url,
-      created_by: userId,
+      name, category, short_description, start_date, end_date,
+      is_virtual, address, city, state, postal_code,
+      contact_details, organization_name, price,
+      image_url, created_by: userId
     });
 
     if (create) {
-      return res.status(200).json({ message: "Event created successfully!" });
+      return res.status(201).json({ message: "Event created successfully!", event: create });
     } else {
       return res.status(400).json({ message: "Error in creating an event" });
     }
+
   } catch (err) {
     console.error("Event creation error:", err.errors || err.message || err);
-    return res
-      .status(500)
-      .json({ message: err.message || "Internal server error" });
+    return res.status(500).json({ message: err.message || "Internal server error" });
   }
 };
 
@@ -109,7 +86,10 @@ export const updateEvent = async (req, res) => {
   }
 
   try {
-    const event = await Event.findByPk(id);
+    const event = await Event.findByPk(id,{
+      attributes:['id'],
+      raw:true
+    });
 
     if (!event) {
       return res.status(404).json({ message: "No such event exists!" });
@@ -118,16 +98,16 @@ export const updateEvent = async (req, res) => {
     const {
       name,
       category,
-      short_Description,
-      start_Date,
-      end_Date,
-      is_Virtual,
+      short_description,
+      start_date,
+      end_date,
+      is_virtual,
       address,
       city,
       state,
-      postal_Code,
-      contact_Details,
-      organization_Name,
+      postal_code,
+      contact_details,
+      organization_name,
       price,
     } = req.body;
 
@@ -135,22 +115,21 @@ export const updateEvent = async (req, res) => {
       {
         name,
         category,
-        short_Description,
-        start_Date,
-        end_Date,
-        is_Virtual,
+        short_description,
+        start_date,
+        end_date,
+        is_virtual,
         address,
         city,
         state,
-        postal_Code,
-        contact_Details,
-        organization_Name,
+        postal_code,
+        contact_details,
+        organization_name,
         price,
-        updatedAt: Sequelize.literal("CURRENT_TIMESTAMP"),
       },
       {
-        where: { id },
-      },
+        where: { id:event.id },
+      }
     );
 
     return res.status(200).json({ message: "Event updated successfully!" });
@@ -186,107 +165,114 @@ export const deleteEvent = async (req, res) => {
   }
 };
 
-//get all events
-export const getAllEvents = async (req, res) => {
-  try {
-    const events = await Event.findAll(); // add 'await' here
-
-    if (!events || events.length === 0) {
-      return res.status(400).json({ message: "No events have been listed" });
-    }
-
-    return res.status(200).json({ events });
-  } catch (err) {
-    console.error(err);
-    return res.status(500).json({ message: "Internal server error" });
-  }
-};
 
 //list events by filter
-export const getEventsByFilter = async (req, res) => {
+
+export const getAllEvents = async (req, res) => {
   try {
     const {
       name,
       category,
-      start_Date,
-      end_Date,
-      is_Virtual,
+      start_date,
+      end_date,
+      is_virtual,
       city,
       state,
-      organization_Name,
-      minprice,
-      maxPrice,
-      page = 1,
-      limit = 10,
+      organization_name,
+      min_price,
+      max_price,
     } = req.query;
+
+    // Validate date format
+    if (start_date && !isValidDate(start_date)) {
+      return res.status(400).json({ error: "Invalid start_date format. Use YYYY-MM-DD." });
+    }
+    if (end_date && !isValidDate(end_date)) {
+      return res.status(400).json({ error: "Invalid end_date format. Use YYYY-MM-DD." });
+    }
+
+    // Validate price
+    if ((min_price && isNaN(min_price)) || (max_price && isNaN(max_price))) {
+      return res.status(400).json({ error: "Price filters must be numeric." });
+    }
+
+    // Pagination
+    const page = Math.max(parseInt(req.query.page) || 1, 1);
+    const limit = Math.min(Math.max(parseInt(req.query.limit) || 8, 1), 100);
+    const offset = (page - 1) * limit;
 
     const filters = {};
 
-    if (name) {
-      filters.name = { [Op.like]: `%${name}%` };
-    }
-    if (category) {
-      filters.category = { [Op.like]: `%${category}%` };
-    }
-    if (start_Date && end_Date) {
-      filters.start_Date = {
-        [Op.between]: [new Date(start_Date), new Date(end_Date)],
+    if (name?.trim()) {
+      filters.name = {
+        [Op.like]: `%${escapeLike(name.trim())}%`,
       };
     }
-    if (is_Virtual !== undefined) {
-      filters.is_Virtual = is_Virtual === "true";
-    }
-    if (city) {
-      filters.city = { [Op.like]: `%${city}%` };
-    }
-    if (state) {
-      filters.state = { [Op.like]: `%${state}%` };
-    }
-    if (organization_Name) {
-      filters.organization_Name = { [Op.like]: `%${organization_Name}%` };
-    }
-    if (minprice || maxPrice) {
-      filters.price = {};
-      if (minprice) filters.price[Op.gte] = parseInt(minprice);
-      if (maxPrice) filters.price[Op.lte] = parseInt(maxPrice);
+
+    if (category?.trim()) {
+      filters.category = {
+        [Op.like]: `%${escapeLike(category.trim())}%`,
+      };
     }
 
-    const offset = (page - 1) * limit;
+    if (start_date && end_date) {
+      filters.start_Date = {
+        [Op.between]: [new Date(start_date), new Date(end_date)],
+      };
+    } else if (start_date) {
+      filters.start_Date = { [Op.gte]: new Date(start_date) };
+    } else if (end_date) {
+      filters.start_Date = { [Op.lte]: new Date(end_date) };
+    }
+
+    if (typeof is_virtual !== "undefined") {
+      filters.is_Virtual = is_virtual.toLowerCase() === "true";
+    }
+
+    if (city?.trim()) {
+      filters.city = {
+        [Op.like]: `%${escapeLike(city.trim())}%`,
+      };
+    }
+
+    if (state?.trim()) {
+      filters.state = {
+        [Op.like]: `%${escapeLike(state.trim())}%`,
+      };
+    }
+
+    if (organization_name?.trim()) {
+      filters.organization_Name = {
+        [Op.like]: `%${escapeLike(organization_name.trim())}%`,
+      };
+    }
+
+    if (min_price || max_price) {
+      filters.price = {};
+      if (!isNaN(min_price)) filters.price[Op.gte] = parseFloat(min_price);
+      if (!isNaN(max_price)) filters.price[Op.lte] = parseFloat(max_price);
+    }
 
     const { count, rows } = await Event.findAndCountAll({
       where: filters,
-      offset: offset,
-      limit: parseInt(limit),
+      offset,
+      limit,
       order: [["start_Date", "ASC"]],
     });
 
-    if (count === 0) {
-      let message = "No events found";
-      if (name) message += ` with name '${name}'`;
-      else if (category) message += ` in category '${category}'`;
-      else if (city) message += ` in city '${city}'`;
-      else if (state) message += ` in state '${state}'`;
-      else if (organization_Name)
-        message += ` by organization '${organization_Name}'`;
-      else if (start_Date && end_Date)
-        message += ` between ${start_Date} and ${end_Date}`;
-      else if (is_Virtual !== undefined)
-        message +=
-          is_Virtual === "true"
-            ? " for virtual events"
-            : " for in-person events";
-      else if (minprice || maxPrice)
-        message += ` in price range ${minprice || 0} - ${maxPrice || "∞"}`;
-
-      return res.status(404).json({ message });
+    if (!rows.length) {
+      return res.status(404).json({
+        message: "No events found for the given filters.",
+        filtersUsed: filters,
+      });
     }
 
     res.status(200).json({
       data: rows,
       pagination: {
         total: count,
-        currentPage: parseInt(page),
-        limit: parseInt(limit),
+        currentPage: page,
+        limit,
         totalPages: Math.ceil(count / limit),
       },
     });
@@ -295,3 +281,4 @@ export const getEventsByFilter = async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 };
+

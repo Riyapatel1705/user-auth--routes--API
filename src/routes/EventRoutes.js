@@ -7,7 +7,6 @@ import {
   getAllEvents,
   registerUserEvent,
   updateEvent,
-  getEventsByFilter,
 } from "../controller/EventController.js";
 
 const EventRouter = express.Router();
@@ -22,6 +21,5 @@ EventRouter.put("/api/update-event", Authorization, updateEvent);
 EventRouter.delete("/api/delete-event", Authorization, deleteEvent);
 
 EventRouter.get("/api/getall-events", getAllEvents);
-EventRouter.get("/api/getevents-by-filter", getEventsByFilter);
 
 export { EventRouter };

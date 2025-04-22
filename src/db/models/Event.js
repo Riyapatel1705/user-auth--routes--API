@@ -1,5 +1,5 @@
+import { DataTypes } from "sequelize";
 import { db } from "../index.js";
-import { DataTypes, Sequelize } from "sequelize";
 
 export const Event = db.define(
   "events",
@@ -18,21 +18,22 @@ export const Event = db.define(
       type: DataTypes.TEXT,
       allowNull: false,
     },
-    short_Description: {
+    short_description: {
       type: DataTypes.TEXT,
       allowNull: false,
     },
-    start_Date: {
+    start_date: {
       type: DataTypes.DATE,
       allowNull: false,
     },
-    end_Date: {
+    end_date: {
       type: DataTypes.DATE,
       allowNull: false,
     },
-    is_Virtual: {
+    is_virtual: {
       type: DataTypes.BOOLEAN,
       defaultValue: false,
+      allowNull:false
     },
     address: {
       type: DataTypes.TEXT,
@@ -43,34 +44,42 @@ export const Event = db.define(
     },
     city: {
       type: DataTypes.TEXT,
-      allowNull: false,
+      allowNull: true,
     },
     state: {
       type: DataTypes.TEXT,
-      allowNull: false,
+      allowNull: true,
     },
-    image_Url: {
+    image_url: {
       type: DataTypes.STRING,
       allowNull: true,
     },
-
-    postal_Code: {
+    postal_code: {
       type: DataTypes.TEXT,
     },
-    contact_Details: {
-      type: DataTypes.JSON, //  Corrected from JSONB (MySQL doesn't support JSONB)
+    contact_details: {
+      type: DataTypes.JSON, // MySQL-friendly
     },
-    organization_Name: {
+    organization_name: {
       type: DataTypes.TEXT,
     },
     price: {
       type: DataTypes.INTEGER,
       allowNull: false,
     },
+    created_at: {
+      type: DataTypes.DATE,
+      defaultValue: DataTypes.NOW,
+      allowNull: false,
+    },
+    updated_at: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
   },
   {
-    timestamps: true, // Let Sequelize handle createdAt/updatedAt
-    paranoid: true, //  (Optional) enables soft deletes using deletedAt
-    tableName: "events", // Optional, just for clarity
-  },
+    freezeTableName: true,
+    timestamps: false, // <--- You control timestamps manually
+  }
 );
+
