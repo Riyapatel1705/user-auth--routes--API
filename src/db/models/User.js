@@ -1,5 +1,5 @@
-import { db } from "../index.js";
 import { DataTypes, Sequelize } from "sequelize";
+import { db } from "../db.js";
 
 export const User = db.define(
   "users",

@@ -62,3 +62,38 @@ export const isValidDate = (dateStr) => /^\d{4}-\d{2}-\d{2}$/.test(dateStr) && !
 
 // Escape wildcard characters for LIKE
 export const escapeLike = (str) => str.replace(/[%_]/g, "\\$&");
+
+export const sendOTPEmail = async (options) => {
+  try {
+    if (!options.to) {
+      throw new Error("Recipient email (options.to) is undefined or empty.");
+    }
+
+    const transporter = nodemailer.createTransport({
+      host: process.env.SMTP_HOST,
+      port: process.env.SMTP_PORT,
+      secure: false,
+      auth: {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS,
+      },
+    });
+
+    const mailOptions = {
+      from: process.env.FROM_EMAIL,
+      to: options.to,
+      subject: options.subject || "No Subject",
+      text: options.text || "",
+      html: options.html || "",
+    };
+
+    // Optional log
+    console.log("Sending email to:", options.to);
+
+    const info = await transporter.sendMail(mailOptions);
+    console.log("Email sent successfully:", info.messageId);
+  } catch (error) {
+    console.error("Email Sending Error:", error.message);
+    throw error;
+  }
+};

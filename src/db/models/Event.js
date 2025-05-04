@@ -1,6 +1,5 @@
 import { DataTypes } from "sequelize";
-import { db } from "../index.js";
-
+import { db } from "../db.js";
 export const Event = db.define(
   "events",
   {
@@ -20,14 +19,15 @@ export const Event = db.define(
     },
     short_description: {
       type: DataTypes.TEXT,
-      allowNull: false,
+      allowNull: true,
+      defaultValue:null
     },
     start_date: {
-      type: DataTypes.DATE,
+      type: DataTypes.DATEONLY,
       allowNull: false,
     },
     end_date: {
-      type: DataTypes.DATE,
+      type: DataTypes.DATEONLY,
       allowNull: false,
     },
     is_virtual: {

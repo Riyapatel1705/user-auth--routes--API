@@ -9,6 +9,7 @@ import {
   validatePassword,
   checkEmailExists,
   checkUsernameExists,
+  sendOTPEmail
 } from "../utils/validation.js";
 
 // Register user
@@ -64,7 +65,6 @@ export const register = async (req, res) => {
 };
 
 // Login user
-
 export const login = async (req, res) => {
   const { email, password } = req.body;
 
@@ -82,7 +82,7 @@ export const login = async (req, res) => {
     }
 
     const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, {
-      expiresIn: "1h",
+      expiresIn: "24 h",
     });
 
     res.json({ token });
@@ -92,7 +92,7 @@ export const login = async (req, res) => {
   }
 };
 
-//get user deatils
+//get user details
 export const getUser = async (req, res) => {
   try {
     console.log("Decoded User:", req.user);
@@ -122,5 +122,76 @@ export const getUser = async (req, res) => {
   } catch (err) {
     console.error("Error fetching user:", err.message, err.stack);
     res.status(500).json({ error: "Server error" });
+  }
+};
+
+//forgetPassword Logic
+export const forgetPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    const user = await User.findOne({ where: { email } });
+    if (!user) return res.status(404).json({ message: "User not found!" });
+
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    await User.update({ reset_password_otp: otp }, { where: { email } });
+
+    // Fixed sendOTPEmail call
+    await sendOTPEmail({
+      to: email,
+      subject: "Password Reset OTP",
+      text: `Your OTP is: ${otp}`,
+      html: `<p>Your OTP is: <strong>${otp}</strong></p>`,
+    });
+
+    res.json({ message: "OTP sent to your email" });
+  } catch (error) {
+    console.error("Forget Password Error:", error);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
+//reset password
+export const resetPassword = async (req, res) => {
+  try {
+    const { reset_password_otp } = req.query;
+    const { newPassword, confirmPassword } = req.body;
+
+    if (!reset_password_otp) {
+      return res.status(400).json({ message: "OTP is required in query!" });
+    }
+
+    if (!newPassword || !confirmPassword) {
+      return res.status(400).json({ message: "Both passwords are required" });
+    }
+    // STEP 1 : Validate Password
+    if (newPassword !== confirmPassword) {
+      return res.status(400).json({ message: "Passwords do not match" });
+    }
+
+    const user = await User.findOne({
+      where: { reset_password_otp },
+    });
+
+    if (!user) {
+      return res.status(400).json({ message: "Invalid or expired OTP!" });
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    // STEP 3 : Update User's Password
+    await User.update(
+      {
+        password: hashedPassword,
+        reset_password_otp: null,
+        updated_at: new Date(),
+      },
+      { where: { id: user.id } },
+    );
+
+    res.json({ message: "Password reset successful" });
+  } catch (error) {
+    console.error("Reset Password Error:", error);
+    res.status(500).json({ message: "Internal Server Error" });
   }
 };

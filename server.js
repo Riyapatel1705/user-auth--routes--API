@@ -1,14 +1,15 @@
 import cors from "cors";
 import dotenv from "dotenv";
 import express from "express";
-import { AuthRouter } from "./src/routes/AuthRoutes.js";
-import { UserRouter } from "./src/routes/UserRoutes.js";
-import { EventRouter } from "./src/routes/EventRoutes.js";
-import { db } from "./src/db/index.js";
-import multer from "multer";
-import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url"; // Import fileURLToPath to use in ES modules
+import { db } from "./src/db/db.js";
+import { AuthRouter } from "./src/routes/AuthRoutes.js";
+import { EventRouter } from "./src/routes/EventRoutes.js";
+import { UserRouter } from "./src/routes/UserRoutes.js";
+import { OrganizationRouter } from "./src/routes/OrganizationRoutes.js";
+import { Feedback } from "./src/db/models/Feedback.js";
+import './src/db/association.js';
 
 dotenv.config();
 
@@ -22,12 +23,13 @@ app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 // Serve static files from 'uploads' directory
-app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+app.use("/public", express.static(path.join(__dirname, "public")));
 
 // Routes
 app.use(AuthRouter);
 app.use(UserRouter);
 app.use(EventRouter);
+app.use(OrganizationRouter);
 
 app.use((req, res, next) => {
   console.log(`Incoming request: ${req.method} ${req.url}`);
@@ -39,11 +41,11 @@ app.use((req, res, next) => {
     await db.sync({ alter: true });
     console.log("Database synchronised");
   } catch (err) {
-    console.error("Error syncing database:", err);
+    console.error("Error syncing database:", err.message);
   }
 })();
 
-const PORT = process.env.PORT || 4000;
+const PORT = process.env.PORT || 5000
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });

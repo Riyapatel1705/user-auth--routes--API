@@ -1,15 +1,18 @@
-import { Sequelize } from "sequelize";
+// index.js
+import { db } from './db.js';
+import './models/User.js';
+import './models/Event.js';
+import './models/Bookmark.js';
+import './models/Feedback.js';
 
-export const db = new Sequelize("event_db", "new", "new@71", {
-  host: "localhost",
-  dialect: "mysql",
-});
+import './association.js';
 
-(async function () {
+(async () => {
   try {
     await db.authenticate();
-    console.log("Connected to MySQL using sequelize");
+    console.log("Connected to MySQL using Sequelize");
   } catch (error) {
-    console.error("Unable to connect to the database:", error);
+    console.error("Unable to connect to the database:", error.message);
   }
 })();
+
