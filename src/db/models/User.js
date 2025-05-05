@@ -1,5 +1,5 @@
-import { db } from "../index.js";
 import { DataTypes, Sequelize } from "sequelize";
+import { db } from "../db.js";
 
 export const User = db.define(
   "users",
@@ -35,7 +35,6 @@ export const User = db.define(
       type: DataTypes.STRING,
       allowNull: false,
     },
-
     updated_at: {
       type: DataTypes.DATE,
       defaultValue: Sequelize.NOW, // Correct way to set the current timestamp
