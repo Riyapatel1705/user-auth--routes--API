@@ -359,13 +359,18 @@ export const bookmarkEvent = async (req, res) => {
     const user_id = req.user?.id;
     const { event_id } = req.body;
 
+
     if (!user_id) {
       return res.status(401).json({ message: "Unauthorized or missing user" });
     }
 
-    if (!event_id || isNaN(event_id)) {
+    if (!event_id || typeof event_id !== "string") {
       return res.status(400).json({ message: "Valid Event ID is required" });
     }
+    console.log("user_id:", user_id);
+    console.log("event_id:", event_id);
+
+    
 
     const eventExists = await Event.findByPk(event_id);
     if (!eventExists) {
@@ -560,17 +565,17 @@ return res.status(200).json({closingSoonEvents:events});
 //suggest events based on user's bookmarks
 export const getSuggestedEvents=async(req,res)=>{
   try {
-    const {userId}=req.query;
-    if(!userId) return res.status(400).json({message:"User ID required"});
+    const {user_id}=req.query;
+    if(!user_id) return res.status(400).json({message:"User ID required"});
 
     const bookmarks=await Bookmark.findAll({
-      where:{userId},
+      where:{user_id},
       include:[{model:Event,as:"event"}]
     });
     if(!bookmarks.length)return res.status(200).json({message:"No bookmarks found"});
 
     const categories=bookmarks.map(b=>b.event.category);
-    const bookmarkedEventIds=bookmarks.map(b=>b.eventId);
+    const bookmarkedEventIds=bookmarks.map(b=>b.event_id);
 
     const suggestedEvents=await Event.findAll({
       where:{
@@ -662,22 +667,35 @@ export const getFeedbackOfUser=async(req,res)=>{
 }
 
 //functionality of get feedbacks on any single event
-export const getFeedbackOfEvent=async(req,res)=>{
-  const{event_id}=req.query;
-  if(!event_id){
-    return res.status(400).json({message:"No eventId provided"});
-  };
-  try {
-    const event=await Feedback.findAll({where:{event_id}});
-    if(event.length===0){
-      return res.status(200).json({message:"This event does not have any feedback"});
-    }
-    return res.status(200).json({event});
-  }catch(err){
-    console.log("Error in fetching event's feedbacks:",err.message);
-    return res.status(500).json({message:"Internal server error"});
+export const getFeedbackOfEvent = async (req, res) => {
+  const { event_id } = req.query;
+
+  if (!event_id) {
+    return res.status(400).json({ message: "No eventId provided" });
   }
-}
+
+  try {
+    const eventFeedbacks = await Feedback.findAll({
+      where: { event_id },
+      include: [
+        {
+          model: User,
+          attributes: ["first_name", "last_name"], // Only fetch name fields
+        },
+      ],
+    });
+
+    if (eventFeedbacks.length === 0) {
+      return res.status(200).json({ message: "This event does not have any feedback" });
+    }
+
+    return res.status(200).json({ feedbacks: eventFeedbacks });
+  } catch (err) {
+    console.log("Error in fetching event's feedbacks:", err.message);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
 
 //delete feedback of any user of any event
 export const deleteFeedback=async(req,res)=>{

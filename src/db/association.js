@@ -8,20 +8,20 @@ import { Admin } from './models/Admin.js';
 
 // Define the associations directly here after both models are initialized
 Event.hasMany(Bookmark, {
-  foreignKey: 'eventId',
+  foreignKey: 'event_id',
   as: 'bookmarks',
 });
 
 Bookmark.belongsTo(Event, {
-  foreignKey: 'eventId',
+  foreignKey: 'event_id',
   as: 'event',
 });
 
-User.hasMany(Feedback,{foreignKey:"userId"});
-Feedback.belongsTo(User,{foreignKey:"userId"});
+User.hasMany(Feedback,{foreignKey:"user_id"});
+Feedback.belongsTo(User,{foreignKey:"user_id"});
 
-Event.hasMany(Feedback,{foreignKey:"eventId"});
-Feedback.belongsTo(Event,{foreignKey:"eventId"});
+Event.hasMany(Feedback,{foreignKey:"event_id"});
+Feedback.belongsTo(Event,{foreignKey:"event_id"});
 
 Organization.hasMany(Event,{foreignKey:'organization_id'});
 Event.belongsTo(Organization,{foreignKey:'organization_id'});
