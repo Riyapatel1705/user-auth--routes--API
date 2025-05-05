@@ -1,4 +1,5 @@
 import { Admin } from "../db/models/Admin.js";
+import jwt from 'jsonwebtoken';
 
 export const registerAdmin = async (req, res) => {
     try {
@@ -26,6 +27,39 @@ export const registerAdmin = async (req, res) => {
       return res.status(500).json({ message: "Internal server error" });
     }
   };
+
+  export const loginAdmin = async (req, res) => {
+    const { Admin_id, email } = req.body;
+    console.log("Login API Hit");
+
+    if (!Admin_id || !email) {
+        return res.status(400).json({ message: "Admin_id and email are required" });
+    }
+
+    try {
+        const admin = await Admin.findOne({
+            where: { Admin_id, email }
+        });
+
+        if (!admin) {
+            return res.status(401).json({ message: "Admin does not exist or invalid credentials" });
+        }
+
+        const role = admin.role;
+
+        const token = jwt.sign(
+            { id: admin.Admin_id, email: admin.email, role },
+            process.env.JWT_SECRET,
+            { expiresIn: '24h' }
+        );
+
+        return res.json({ token });
+    } catch (err) {
+        console.error("Error during login:", err);
+        return res.status(500).json({ message: "Internal server error" });
+    }
+};
+
 
 export const deleteAdmin = async (req, res) => {
     try {

@@ -779,3 +779,4 @@ export const addEventByOrganization = async (req, res) => {
   }
 };
 
+
