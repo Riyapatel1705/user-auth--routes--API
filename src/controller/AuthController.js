@@ -1,13 +1,15 @@
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { User } from "../db/models/User.js";
+import dotenv from "dotenv";
+dotenv.config();
 import {
+  validateEmail,
+  validateUsername,
+  validatePassword,
   checkEmailExists,
   checkUsernameExists,
-  validateEmail,
-  validatePassword,
-  validateUsername,
-  sendOTPEmail,
+  sendOTPEmail
 } from "../utils/validation.js";
 
 // Register user
@@ -15,36 +17,32 @@ export const register = async (req, res) => {
   const { first_name, last_name, email, password } = req.body;
 
   if (!validateUsername(first_name, last_name)) {
-    return res
-      .status(400)
-      .json({
-        error:
-          "Username must be at least 3 characters long and contain only letters and numbers.",
-      });
+    return res.status(400).json({
+      message:
+        "Username must be at least 3 characters long and only contains letters",
+    });
   }
   if (!validatePassword(password)) {
-    return res
-      .status(400)
-      .json({
-        error:
-          "Password must be at least 6 characters long and contain at least one number and one special character.",
-      });
+    return res.status(400).json({
+      message:
+        "password must be at least 6 characters long and contain at least one number and one special character",
+    });
   }
   if (!validateEmail(email)) {
-    return res.status(400).json({ error: "Email format is incorrect." });
+    return res.status(400).json({ message: "Email format is incorrect." });
   }
 
   try {
     const usernameExists = await checkUsernameExists(first_name, last_name);
     if (usernameExists) {
-      return res.status(400).json({ error: "User already exists." });
+      return res.status(400).json({ message: "User already exists." });
     }
 
     const emailExists = await checkEmailExists(email);
     if (emailExists) {
       return res
         .status(400)
-        .json({ error: "This email's user already exists!" });
+        .json({ message: "This email's user already exists!" });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -67,7 +65,6 @@ export const register = async (req, res) => {
 };
 
 // Login user
-
 export const login = async (req, res) => {
   const { email, password } = req.body;
 
@@ -75,26 +72,56 @@ export const login = async (req, res) => {
     const user = await User.findOne({ where: { email } });
 
     if (!user) {
-      return res.status(404).json({ error: "User not found" });
+      return res.status(400).json({ message: "Invalid email or password" });
     }
 
-    const validPassword = await bcrypt.compare(password, user.password);
+    const isMatch = await bcrypt.compare(password, user.password);
 
-    if (!validPassword) {
-      return res.status(400).json({ error: "Invalid password" });
+    if (!isMatch) {
+      return res.status(400).json({ message: "Invalid email or password" });
     }
 
     const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, {
-      expiresIn: "1h",
+      expiresIn: "24 h",
     });
 
-    res.status(200).json({
-      message: "Login successful",
-      token,
+    res.json({ token });
+  } catch (err) {
+    console.error("Error during login:", err);
+    res.status(500).json({ message: "Database error" });
+  }
+};
+
+//get user details
+export const getUser = async (req, res) => {
+  try {
+    console.log("Decoded User:", req.user);
+
+    const userId = req.user?.id;
+
+    if (!userId) {
+      console.error("No user ID in decoded token");
+      return res.status(401).json({ error: "Unauthorized: No user ID found" });
+    }
+
+    console.log("Fetching user with ID:", userId);
+
+    // Make sure User is properly imported and initialized
+    const user = await User.findByPk(userId, {
+      attributes: ["id", "first_name", "last_name", "email"],
     });
-  } catch (error) {
-    console.error("Login Error:", error);
-    res.status(500).json({ error: "Internal Server Error" });
+
+    if (!user) {
+      console.error("User not found in database");
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    console.log("User Found:", user);
+
+    res.json({ user });
+  } catch (err) {
+    console.error("Error fetching user:", err.message, err.stack);
+    res.status(500).json({ error: "Server error" });
   }
 };
 
@@ -166,38 +193,5 @@ export const resetPassword = async (req, res) => {
   } catch (error) {
     console.error("Reset Password Error:", error);
     res.status(500).json({ message: "Internal Server Error" });
-  }
-};
-
-//get user details
-export const getUser = async (req, res) => {
-  try {
-    console.log("Decoded User:", req.user);
-
-    const userId = req.user?.id;
-
-    if (!userId) {
-      console.error("No user ID in decoded token");
-      return res.status(401).json({ error: "Unauthorized: No user ID found" });
-    }
-
-    console.log("Fetching user with ID:", userId);
-
-    // Make sure User is properly imported and initialized
-    const user = await User.findByPk(userId, {
-      attributes: ["id", "first_name", "last_name", "email"],
-    });
-
-    if (!user) {
-      console.error("User not found in database");
-      return res.status(404).json({ error: "User not found" });
-    }
-
-    console.log("User Found:", user);
-
-    res.json({ user });
-  } catch (err) {
-    console.error("Error fetching user:", err.message, err.stack);
-    res.status(500).json({ error: "Server error" });
   }
 };
