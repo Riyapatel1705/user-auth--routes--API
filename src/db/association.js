@@ -20,6 +20,7 @@ Bookmark.belongsTo(Event, {
 User.hasMany(Feedback,{foreignKey:"user_id"});
 Feedback.belongsTo(User,{foreignKey:"user_id"});
 
+
 Event.hasMany(Feedback,{foreignKey:"event_id"});
 Feedback.belongsTo(Event,{foreignKey:"event_id"});
 

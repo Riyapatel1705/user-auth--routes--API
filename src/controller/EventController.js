@@ -9,7 +9,7 @@ import { Admin } from "../db/models/Admin.js";
 import { Feedback } from "../db/models/Feedback.js";
 import { User } from "../db/models/User.js";
 import { Organization } from "../db/models/Organization.js";
-
+import { bookmarkQueue } from "../queues/bookmarkQueue.js";
 env.config();
 
 const storage = multer.diskStorage({
@@ -286,7 +286,7 @@ export const getAllEvents = async (req, res) => {
     });
   } catch (error) {
     console.error("Error fetching events:", error);
-    res.status(500).json({ error: "Internal server error" });
+    res.status(500).json({ message: "Internal server error" });
   }
 };
 
@@ -381,9 +381,8 @@ export const bookmarkEvent = async (req, res) => {
     if (existing) {
       return res.status(200).json({ message: "Already bookmarked" });
     }
-
-    const bookmark = await Bookmark.create({ user_id, event_id });
-    res.status(201).json({ message: "Bookmarked successfully", bookmark });
+     bookmarkQueue.add('add-bookmark',{user_id,event_id},{delay:30000});
+     res.status(201).json({ message: "Bookmarked successfully"});
 
   } catch (error) {
     console.error("Bookmark error:", error.message);

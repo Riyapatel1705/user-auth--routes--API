@@ -2,18 +2,33 @@ import cors from "cors";
 import dotenv from "dotenv";
 import express from "express";
 import path from "path";
-import { fileURLToPath } from "url"; // Import fileURLToPath to use in ES modules
+import { fileURLToPath } from "url";
 import { db } from "./src/db/db.js";
 import { AuthRouter } from "./src/routes/AuthRoutes.js";
 import { EventRouter } from "./src/routes/EventRoutes.js";
 import { UserRouter } from "./src/routes/UserRoutes.js";
 import { OrganizationRouter } from "./src/routes/OrganizationRoutes.js";
 import { Feedback } from "./src/db/models/Feedback.js";
+import './src/workers/bookmarkWorker.js';
 import './src/db/association.js';
+
+import { ExpressAdapter } from '@bull-board/express';
+import { createBullBoard } from '@bull-board/api';
+import { BullMQAdapter } from '@bull-board/api/bullMQAdapter.js';
+import { bookmarkQueue } from "./src/queues/bookmarkQueue.js";
 
 dotenv.config();
 
 const app = express();
+const serverAdapter= new ExpressAdapter();
+serverAdapter.setBasePath('/admin/queues');
+
+createBullBoard({
+  queues:[new BullMQAdapter(bookmarkQueue)],
+  serverAdapter,
+});
+
+app.use('/admin/queues',serverAdapter.getRouter());
 app.use(cors({ origin: "http://localhost:3000", credentials: true }));
 app.use(express.json());
 app.use("/uploads", express.static("uploads"));
@@ -24,6 +39,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 // Serve static files from 'uploads' directory
 app.use("/public", express.static(path.join(__dirname, "public")));
+
 
 // Routes
 app.use(AuthRouter);
@@ -48,4 +64,5 @@ app.use((req, res, next) => {
 const PORT = process.env.PORT || 5000
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
+  console.log('BullMQ Dashboard at http://localhost:5000/admin/queues');
 });

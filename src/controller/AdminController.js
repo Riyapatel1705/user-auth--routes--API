@@ -60,30 +60,30 @@ export const registerAdmin = async (req, res) => {
     }
 };
 
-
 export const deleteAdmin = async (req, res) => {
     try {
-        const { id } = req.query; 
+        const { id } = req.params;
 
-        if (!id) {
-            return res.status(400).json({ message: "No admin ID has been provided" });
+        console.log("DELETE ADMIN ROUTE HIT");
+        console.log("Requested admin ID:", id);
+
+        const adminId = parseInt(id);
+        if (isNaN(adminId)) {
+            return res.status(400).json({ message: "Invalid admin ID" });
         }
 
-        const isAdmin = await Admin.findOne({ where: { id } });
+        const isAdmin = await Admin.findOne({ where: { id: adminId } });
 
         if (!isAdmin) {
-            return res.status(401).json({ message: "The user is not an admin" });
+            return res.status(404).json({ message: "Admin not found" });
         }
 
-        const deleteAdmin = await Admin.destroy({ where: { id } });
-
-        if (!deleteAdmin) {
-            return res.status(400).json({ message: "Unable to delete admin" });
-        }
+        await Admin.destroy({ where: { id: adminId } });
 
         return res.status(200).json({ message: "Admin has been deleted successfully!" });
 
     } catch (err) {
+        console.error("Error in deleteAdmin:", err);
         return res.status(500).json({ message: "Internal server error" });
     }
 };
