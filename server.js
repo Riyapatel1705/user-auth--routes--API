@@ -9,13 +9,13 @@ import { EventRouter } from "./src/routes/EventRoutes.js";
 import { UserRouter } from "./src/routes/UserRoutes.js";
 import { OrganizationRouter } from "./src/routes/OrganizationRoutes.js";
 import { Feedback } from "./src/db/models/Feedback.js";
-import './src/workers/bookmarkWorker.js';
+import './src/queues/bookmarkQueue.js';
 import './src/db/association.js';
 
 import { ExpressAdapter } from '@bull-board/express';
 import { createBullBoard } from '@bull-board/api';
 import { BullMQAdapter } from '@bull-board/api/bullMQAdapter.js';
-import { bookmarkQueue } from "./src/queues/bookmarkQueue.js";
+import { eventActionsQueue } from "./src/queues/bookmarkQueue.js";
 
 dotenv.config();
 
@@ -24,7 +24,7 @@ const serverAdapter= new ExpressAdapter();
 serverAdapter.setBasePath('/admin/queues');
 
 createBullBoard({
-  queues:[new BullMQAdapter(bookmarkQueue)],
+  queues:[new BullMQAdapter(eventActionsQueue)],
   serverAdapter,
 });
 

@@ -1,15 +1,15 @@
 import env from "dotenv";
 import multer from "multer";
 import path from "path";
-import { Op, fn, col, where, Model } from 'sequelize';
-import { Event } from "../db/models/Event.js";
-import { checkEventExists,isValidDate,escapeLike } from "../utils/validation.js";
-import { Bookmark } from "../db/models/Bookmark.js";
+import { Op } from 'sequelize';
 import { Admin } from "../db/models/Admin.js";
+import { Bookmark } from "../db/models/Bookmark.js";
+import { Event } from "../db/models/Event.js";
 import { Feedback } from "../db/models/Feedback.js";
-import { User } from "../db/models/User.js";
 import { Organization } from "../db/models/Organization.js";
-import { bookmarkQueue } from "../queues/bookmarkQueue.js";
+import { User } from "../db/models/User.js";
+import { eventActionsQueue } from "../queues/bookmarkQueue.js";
+import { checkEventExists, escapeLike, isValidDate } from "../utils/validation.js";
 env.config();
 
 const storage = multer.diskStorage({
@@ -353,12 +353,11 @@ export const getUpcomingEvents=async(req,res)=>{
 }
 
 
-//Bookmark an event
+//Bookmark an event [added queue here]
 export const bookmarkEvent = async (req, res) => {
   try {
     const user_id = req.user?.id;
     const { event_id } = req.body;
-
 
     if (!user_id) {
       return res.status(401).json({ message: "Unauthorized or missing user" });
@@ -367,10 +366,10 @@ export const bookmarkEvent = async (req, res) => {
     if (!event_id || typeof event_id !== "string") {
       return res.status(400).json({ message: "Valid Event ID is required" });
     }
-    console.log("user_id:", user_id);
-    console.log("event_id:", event_id);
 
-    
+    if (!req.user.email) {
+      return res.status(400).json({ message: "User email not found" });
+    }
 
     const eventExists = await Event.findByPk(event_id);
     if (!eventExists) {
@@ -381,14 +380,25 @@ export const bookmarkEvent = async (req, res) => {
     if (existing) {
       return res.status(200).json({ message: "Already bookmarked" });
     }
-     bookmarkQueue.add('add-bookmark',{user_id,event_id},{delay:30000});
-     res.status(201).json({ message: "Bookmarked successfully"});
 
+    const userData = {
+      userId: user_id,
+      userEmail: req.user.email,
+      userName: req.user.name || "User",
+      eventId: event_id,
+    };
+
+    console.log("Enqueuing with userData:", userData);
+
+    await eventActionsQueue.add('event-action-queue', userData);
+
+    res.status(201).json({ message: "Bookmarked successfully" });
   } catch (error) {
     console.error("Bookmark error:", error.message);
     res.status(500).json({ message: "Internal server error" });
   }
 };
+
 
 
 //delete bookmark event of any user 

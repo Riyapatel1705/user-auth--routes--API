@@ -97,3 +97,5 @@ export const sendOTPEmail = async (options) => {
     throw error;
   }
 };
+
+//create a pdf and send it to the user in queue use pdf.lib

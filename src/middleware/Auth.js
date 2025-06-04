@@ -8,7 +8,7 @@ export const Authorization = (req, res, next) => {
     console.log("Request Headers:", req.headers);
 
     const authHeader = req.header("Authorization");
-
+    
     if (!authHeader) {
       return res
         .status(401)
