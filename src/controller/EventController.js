@@ -9,7 +9,7 @@ import { Feedback } from "../db/models/Feedback.js";
 import { Organization } from "../db/models/Organization.js";
 import { User } from "../db/models/User.js";
 import { eventActionsQueue } from "../queues/bookmarkQueue.js";
-import { checkEventExists, escapeLike, isValidDate } from "../utils/validation.js";
+import { checkEventExists, escapeLike, isValidDate ,validateEmail} from "../utils/validation.js";
 env.config();
 
 const storage = multer.diskStorage({

@@ -1,32 +1,68 @@
-import { Event } from "../db/models/Event.js";
+import { PDFDocument, StandardFonts, rgb } from 'pdf-lib';
 
 export const createPdfBuffer = async ({ userName, event }) => {
+  if (!userName || !event) {
+    console.error("Missing userName or event data in createPdfBuffer:", { userName, event });
+    return null;
+  }
+
   const pdfDoc = await PDFDocument.create();
   const page = pdfDoc.addPage([600, 750]);
   const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
+  const boldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
 
-  let y = 700;
-  const draw = (text, x = 50, size = 12) => {
-    page.drawText(text, { x, y, size, font, color: rgb(0.2, 0.2, 0.2) });
-    y -= 25;
+  let y = 720;
+
+  const draw = (text, x = 50, size = 12, isBold = false, spacing = 25) => {
+    page.drawText(text, {
+      x,
+      y,
+      size,
+      font: isBold ? boldFont : font,
+      color: rgb(0.15, 0.15, 0.15),
+    });
+    y -= spacing;
   };
-  const firstName=userName
 
-  draw(`Hi ${userName.name},`);
-  draw(`You successfully bookmarked the following event:`);
-  y -= 10;
+  // Header
+  draw('Event Bookmark Confirmation', 50, 16, true, 30);
+  draw(`Hi ${userName.split(' ')[0]},`, 50, 13);
+  draw(`Thank you for bookmarking the event.`, 50, 12);
+  y -= 15;
+  draw(`Event Details:`, 50, 13, true, 20);
 
-  draw(`Event Name: ${event.name}`);
-  draw(`Category: ${event.category}`);
+  draw(`Name: ${event.name}`);
+  draw(`Category: ${event.category || 'N/A'}`);
   draw(`Start Date: ${event.start_date}`);
   draw(`End Date: ${event.end_date}`);
   draw(`Virtual: ${event.is_virtual ? 'Yes' : 'No'}`);
-  draw(`Address: ${event.address}, ${event.city || ''}, ${event.state || ''} - ${event.postal_code || ''}`);
-  draw(`Organization: ${event.organization_name || 'N/A'}`);
-  draw(`Price: $${event.price}`);
-  draw(`Contact: ${JSON.stringify(event.contact_details)}`);
-  draw(`Description: ${event.short_description || 'No description provided.'}`);
 
-  const pdfBytes = await pdfDoc.saveAsBase64();
+  const address = [event.address, event.city, event.state, event.postal_code]
+    .filter(Boolean)
+    .join(', ');
+  draw(`Address: ${address || 'N/A'}`);
+  draw(`Organization: ${event.organization_name || 'N/A'}`);
+  draw(`Price: $${event.price ?? 'Free'}`);
+
+  // Proper Contact Details (fully clean)
+  draw(`Contact:`, 50, 12, true, 20);
+  const contact = event.contact_details;
+
+  if (contact && typeof contact === 'object') {
+    const phone = contact.phone ? `Phone: ${contact.phone}` : null;
+    const email = contact.email ? `Email: ${contact.email}` : null;
+
+    if (phone) draw(phone, 60, 10, false, 15);
+    if (email) draw(email, 60, 10, false, 15);
+    if (!phone && !email) draw('N/A', 60, 10, false, 15);
+  } else {
+    draw(contact || 'N/A', 60, 10, false, 15);
+  }
+
+  // Description
+  draw(`Description:`, 50, 12, true, 20);
+  draw(event.short_description || 'No description provided.', 60, 11, false, 40);
+
+  const pdfBytes = await pdfDoc.save();
   return Buffer.from(pdfBytes);
 };
