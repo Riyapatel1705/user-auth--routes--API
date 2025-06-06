@@ -53,9 +53,11 @@ export const checkEventExists = async (name) => {
     const event = await Event.findOne({ where: { name } });
     return event != null;
   } catch (err) {
-    throw new Error("Error in checking event:", err.message);
+    // Properly concatenate both messages
+    throw new Error(`Error in checking event: ${err.message}`);
   }
 };
+
 
 // Utility to validate date format strictly (yyyy-mm-dd)
 export const isValidDate = (dateStr) => /^\d{4}-\d{2}-\d{2}$/.test(dateStr) && !isNaN(Date.parse(dateStr));
@@ -98,4 +100,3 @@ export const sendOTPEmail = async (options) => {
   }
 };
 
-//create a pdf and send it to the user in queue use pdf.lib

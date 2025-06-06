@@ -54,7 +54,7 @@ app.use((req, res, next) => {
 
 (async () => {
   try {
-    await db.sync({ alter: true });
+    await db.sync({ force: true });
     console.log("Database synchronised");
   } catch (err) {
     console.error("Error syncing database:", err.message);

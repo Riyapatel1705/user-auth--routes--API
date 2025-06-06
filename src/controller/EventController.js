@@ -12,6 +12,7 @@ import { eventActionsQueue } from "../queues/bookmarkQueue.js";
 import { checkEventExists, escapeLike, isValidDate ,validateEmail} from "../utils/validation.js";
 env.config();
 
+
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, "uploads/"); // Store files in 'uploads' folder
@@ -30,13 +31,13 @@ export const registerUserEvent = async (req, res) => {
 
   const requiredFields = [
     "name", "category", "start_date", "end_date",
-    "address", "contact_details", "organization_name", "price"
+    "address", "phone_no","email", "organization_name", "price"
   ];
 
   const {
     name, category, short_description, start_date, end_date,
     is_virtual, address, city, state, postal_code,
-    contact_details, organization_name, price
+    phone_no,email, organization_name, price
   } = data;
 
   const missingFields = requiredFields.filter(
@@ -66,7 +67,7 @@ export const registerUserEvent = async (req, res) => {
     const create = await Event.create({
       name, category, short_description, start_date, end_date,
       is_virtual, address, city, state, postal_code,
-      contact_details, organization_name, price,
+      phone_no,email, organization_name, price,
       image_url, created_by: userId
     });
 
@@ -357,7 +358,7 @@ export const getUpcomingEvents=async(req,res)=>{
 export const bookmarkEvent = async (req, res) => {
   try {
     const user_id = req.user?.id;
-    const { event_id } = req.body;
+    const {event_id } = req.body;
 
     if (!user_id) {
       return res.status(401).json({ message: "Unauthorized or missing user" });
@@ -389,7 +390,6 @@ export const bookmarkEvent = async (req, res) => {
     };
 
     console.log("Enqueuing with userData:", userData);
-
     await eventActionsQueue.add('event-action-queue', userData);
 
     res.status(201).json({ message: "Bookmarked successfully" });

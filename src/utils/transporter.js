@@ -15,11 +15,9 @@ transporter.use(
   'compile',
   hbs({
     viewEngine: {
-      extname: '.hbs',
-      partialsDir: path.resolve('./views'),  // fixed here
+      partialsDir: path.resolve('./views'),
       defaultLayout: false,
     },
     viewPath: path.resolve('./views'),
-    extname: '.hbs',  // use consistent casing
   })
 );

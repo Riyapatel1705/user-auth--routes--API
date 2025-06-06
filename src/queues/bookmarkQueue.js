@@ -1,10 +1,9 @@
 import { Queue, Worker } from 'bullmq';
-import { connection } from './redisConnection.js';
+import { Bookmark } from '../db/models/Bookmark.js';
+import { Event } from "../db/models/Event.js";
 import { createPdfBuffer } from '../helper/helper.js';
 import { transporter } from '../utils/transporter.js';
-import { Bookmark } from '../db/models/Bookmark.js';
-import {Event} from "../db/models/Event.js";
-import { validateEmail } from '../utils/validation.js';
+import { connection } from './redisConnection.js';
 export const eventActionsQueue= new Queue('event-action-queue',{
     connection,
 });
@@ -14,18 +13,14 @@ export const eventActionsQueue= new Queue('event-action-queue',{
 new Worker(
   'event-action-queue',
   async (job) => {
-    const { user, data } = job;
-    const { userId, eventId, userEmail, userName } = data;
-    const requiredFields = { userId, eventId, userEmail, userName };
 
-if (Object.values(requiredFields).some((value) => !value)) {
-  console.error("Missing required job data:", requiredFields);
-  return;
-}
-if(!validateEmail(userEmail)){
-  console.log("email format is not proper");
-  return;
-}
+    const { userId, eventId, userEmail, userName } = job.data;
+    if(!userId || !eventId || !userEmail || !userName){
+      return
+    }
+
+
+
  // Simulate delay before processing (for testing purpose)
   await new Promise((resolve) => {
       setTimeout(() => {
@@ -33,12 +28,16 @@ if(!validateEmail(userEmail)){
         resolve();
       }, 3000); // 3 second delay
     });
-
+  try{
     await Bookmark.create({
       user_id: userId,
       event_id: eventId,
       bookmarked_at: new Date(),
     });
+  }catch(err){
+    console.error("error while creating bookmark:",err.message);
+    console.error(err);
+  }
     console.log(`Bookmark added for user ${userId}`);
 
     const event = await Event.findByPk(eventId);

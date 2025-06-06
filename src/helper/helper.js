@@ -1,10 +1,17 @@
 import { PDFDocument, StandardFonts, rgb } from 'pdf-lib';
 
+
+
 export const createPdfBuffer = async ({ userName, event }) => {
   if (!userName || !event) {
     console.error("Missing userName or event data in createPdfBuffer:", { userName, event });
     return null;
   }
+
+  // Attach formatted_contact inside the function
+  const phone = event.phone_no ? `Phone: ${event.phone_no}` : null;
+  const email = event.email ? `Email: ${event.email}` : null;
+  event.formatted_contact = [phone, email].filter(Boolean).join(' | ') || 'N/A';
 
   const pdfDoc = await PDFDocument.create();
   const page = pdfDoc.addPage([600, 750]);
@@ -24,42 +31,26 @@ export const createPdfBuffer = async ({ userName, event }) => {
     y -= spacing;
   };
 
-  // Header
   draw('Event Bookmark Confirmation', 50, 16, true, 30);
   draw(`Hi ${userName.split(' ')[0]},`, 50, 13);
   draw(`Thank you for bookmarking the event.`, 50, 12);
   y -= 15;
   draw(`Event Details:`, 50, 13, true, 20);
 
-  draw(`Name: ${event.name}`);
+  draw(`Name: ${event.name || 'N/A'}`);
   draw(`Category: ${event.category || 'N/A'}`);
-  draw(`Start Date: ${event.start_date}`);
-  draw(`End Date: ${event.end_date}`);
+  draw(`Start Date: ${event.start_date || 'N/A'}`);
+  draw(`End Date: ${event.end_date || 'N/A'}`);
   draw(`Virtual: ${event.is_virtual ? 'Yes' : 'No'}`);
 
-  const address = [event.address, event.city, event.state, event.postal_code]
-    .filter(Boolean)
-    .join(', ');
+  const address = [event.address, event.city, event.state, event.postal_code].filter(Boolean).join(', ');
   draw(`Address: ${address || 'N/A'}`);
   draw(`Organization: ${event.organization_name || 'N/A'}`);
   draw(`Price: $${event.price ?? 'Free'}`);
 
-  // Proper Contact Details (fully clean)
   draw(`Contact:`, 50, 12, true, 20);
-  const contact = event.contact_details;
+  draw(event.formatted_contact || 'N/A', 60, 10, false, 15);
 
-  if (contact && typeof contact === 'object') {
-    const phone = contact.phone ? `Phone: ${contact.phone}` : null;
-    const email = contact.email ? `Email: ${contact.email}` : null;
-
-    if (phone) draw(phone, 60, 10, false, 15);
-    if (email) draw(email, 60, 10, false, 15);
-    if (!phone && !email) draw('N/A', 60, 10, false, 15);
-  } else {
-    draw(contact || 'N/A', 60, 10, false, 15);
-  }
-
-  // Description
   draw(`Description:`, 50, 12, true, 20);
   draw(event.short_description || 'No description provided.', 60, 11, false, 40);
 
