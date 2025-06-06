@@ -57,8 +57,11 @@ export const Event = db.define(
     postal_code: {
       type: DataTypes.TEXT,
     },
-    contact_details: {
-      type: DataTypes.JSON, // MySQL-friendly
+    phone_no: {
+      type: DataTypes.STRING, // MySQL-friendly
+    },
+    email:{
+      type:DataTypes.STRING,
     },
     organization_name: {
       type: DataTypes.TEXT,
@@ -83,3 +86,20 @@ export const Event = db.define(
   }
 );
 
+
+Event.addHook('afterFind', (result) => {
+  const attachFormattedContact = (event) => {
+    const phone = event.phone_no ? `Phone: ${event.phone_no}` : null;
+    const email = event.email ? `Email: ${event.email}` : null;
+
+    event.dataValues.formatted_contact = [phone, email]
+      .filter(Boolean)
+      .join(' | ') || 'N/A';
+  };
+
+  if (Array.isArray(result)) {
+    result.forEach(attachFormattedContact);
+  } else if (result) {
+    attachFormattedContact(result);
+  }
+});

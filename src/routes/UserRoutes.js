@@ -12,7 +12,7 @@ UserRouter.delete("/api/delete/:id", Authorization, deleteUser);
 
 UserRouter.post("/api/register/admin",registerAdmin);
 
-UserRouter.delete("/api/delete/admin",deleteAdmin);
+UserRouter.delete("/api/delete/admin/:id",Authorization,deleteAdmin);
 
 UserRouter.post("/api/Admin/login",loginAdmin)
 

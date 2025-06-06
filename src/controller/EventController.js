@@ -1,16 +1,17 @@
 import env from "dotenv";
 import multer from "multer";
 import path from "path";
-import { Op, fn, col, where, Model } from 'sequelize';
-import { Event } from "../db/models/Event.js";
-import { checkEventExists,isValidDate,escapeLike } from "../utils/validation.js";
-import { Bookmark } from "../db/models/Bookmark.js";
+import { Op } from 'sequelize';
 import { Admin } from "../db/models/Admin.js";
+import { Bookmark } from "../db/models/Bookmark.js";
+import { Event } from "../db/models/Event.js";
 import { Feedback } from "../db/models/Feedback.js";
-import { User } from "../db/models/User.js";
 import { Organization } from "../db/models/Organization.js";
-
+import { User } from "../db/models/User.js";
+import { eventActionsQueue } from "../queues/bookmarkQueue.js";
+import { checkEventExists, escapeLike, isValidDate ,validateEmail} from "../utils/validation.js";
 env.config();
+
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -30,13 +31,13 @@ export const registerUserEvent = async (req, res) => {
 
   const requiredFields = [
     "name", "category", "start_date", "end_date",
-    "address", "contact_details", "organization_name", "price"
+    "address", "phone_no","email", "organization_name", "price"
   ];
 
   const {
     name, category, short_description, start_date, end_date,
     is_virtual, address, city, state, postal_code,
-    contact_details, organization_name, price
+    phone_no,email, organization_name, price
   } = data;
 
   const missingFields = requiredFields.filter(
@@ -66,7 +67,7 @@ export const registerUserEvent = async (req, res) => {
     const create = await Event.create({
       name, category, short_description, start_date, end_date,
       is_virtual, address, city, state, postal_code,
-      contact_details, organization_name, price,
+      phone_no,email, organization_name, price,
       image_url, created_by: userId
     });
 
@@ -286,7 +287,7 @@ export const getAllEvents = async (req, res) => {
     });
   } catch (error) {
     console.error("Error fetching events:", error);
-    res.status(500).json({ error: "Internal server error" });
+    res.status(500).json({ message: "Internal server error" });
   }
 };
 
@@ -353,12 +354,11 @@ export const getUpcomingEvents=async(req,res)=>{
 }
 
 
-//Bookmark an event
+//Bookmark an event [added queue here]
 export const bookmarkEvent = async (req, res) => {
   try {
     const user_id = req.user?.id;
-    const { event_id } = req.body;
-
+    const {event_id } = req.body;
 
     if (!user_id) {
       return res.status(401).json({ message: "Unauthorized or missing user" });
@@ -367,10 +367,10 @@ export const bookmarkEvent = async (req, res) => {
     if (!event_id || typeof event_id !== "string") {
       return res.status(400).json({ message: "Valid Event ID is required" });
     }
-    console.log("user_id:", user_id);
-    console.log("event_id:", event_id);
 
-    
+    if (!req.user.email) {
+      return res.status(400).json({ message: "User email not found" });
+    }
 
     const eventExists = await Event.findByPk(event_id);
     if (!eventExists) {
@@ -382,14 +382,23 @@ export const bookmarkEvent = async (req, res) => {
       return res.status(200).json({ message: "Already bookmarked" });
     }
 
-    const bookmark = await Bookmark.create({ user_id, event_id });
-    res.status(201).json({ message: "Bookmarked successfully", bookmark });
+    const userData = {
+      userId: user_id,
+      userEmail: req.user.email,
+      userName: req.user.name || "User",
+      eventId: event_id,
+    };
 
+    console.log("Enqueuing with userData:", userData);
+    await eventActionsQueue.add('event-action-queue', userData);
+
+    res.status(201).json({ message: "Bookmarked successfully" });
   } catch (error) {
     console.error("Bookmark error:", error.message);
     res.status(500).json({ message: "Internal server error" });
   }
 };
+
 
 
 //delete bookmark event of any user 
