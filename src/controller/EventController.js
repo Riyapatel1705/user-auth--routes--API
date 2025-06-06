@@ -1,17 +1,18 @@
 import env from "dotenv";
 import multer from "multer";
 import path from "path";
-import { Op } from 'sequelize';
-import { Admin } from "../db/models/Admin.js";
-import { Bookmark } from "../db/models/Bookmark.js";
+import { Op, fn, col, where, Model } from 'sequelize';
 import { Event } from "../db/models/Event.js";
+import { checkEventExists,isValidDate,escapeLike } from "../utils/validation.js";
+import { Bookmark } from "../db/models/Bookmark.js";
+import { Admin } from "../db/models/Admin.js";
 import { Feedback } from "../db/models/Feedback.js";
-import { Organization } from "../db/models/Organization.js";
 import { User } from "../db/models/User.js";
-import { eventActionsQueue } from "../queues/bookmarkQueue.js";
-import { checkEventExists, escapeLike, isValidDate ,validateEmail} from "../utils/validation.js";
-env.config();
+import { Organization } from "../db/models/Organization.js";
+import { encryptComment } from "../utils/encryption.js";
+import { decrypt } from "../utils/decryption.js";
 
+env.config();
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -31,13 +32,13 @@ export const registerUserEvent = async (req, res) => {
 
   const requiredFields = [
     "name", "category", "start_date", "end_date",
-    "address", "phone_no","email", "organization_name", "price"
+    "address", "contact_details", "organization_name", "price"
   ];
 
   const {
     name, category, short_description, start_date, end_date,
     is_virtual, address, city, state, postal_code,
-    phone_no,email, organization_name, price
+    contact_details, organization_name, price
   } = data;
 
   const missingFields = requiredFields.filter(
@@ -67,7 +68,7 @@ export const registerUserEvent = async (req, res) => {
     const create = await Event.create({
       name, category, short_description, start_date, end_date,
       is_virtual, address, city, state, postal_code,
-      phone_no,email, organization_name, price,
+      contact_details, organization_name, price,
       image_url, created_by: userId
     });
 
@@ -287,7 +288,7 @@ export const getAllEvents = async (req, res) => {
     });
   } catch (error) {
     console.error("Error fetching events:", error);
-    res.status(500).json({ message: "Internal server error" });
+    res.status(500).json({ error: "Internal server error" });
   }
 };
 
@@ -354,11 +355,12 @@ export const getUpcomingEvents=async(req,res)=>{
 }
 
 
-//Bookmark an event [added queue here]
+//Bookmark an event
 export const bookmarkEvent = async (req, res) => {
   try {
     const user_id = req.user?.id;
-    const {event_id } = req.body;
+    const { event_id } = req.body;
+
 
     if (!user_id) {
       return res.status(401).json({ message: "Unauthorized or missing user" });
@@ -367,10 +369,10 @@ export const bookmarkEvent = async (req, res) => {
     if (!event_id || typeof event_id !== "string") {
       return res.status(400).json({ message: "Valid Event ID is required" });
     }
+    console.log("user_id:", user_id);
+    console.log("event_id:", event_id);
 
-    if (!req.user.email) {
-      return res.status(400).json({ message: "User email not found" });
-    }
+    
 
     const eventExists = await Event.findByPk(event_id);
     if (!eventExists) {
@@ -382,23 +384,14 @@ export const bookmarkEvent = async (req, res) => {
       return res.status(200).json({ message: "Already bookmarked" });
     }
 
-    const userData = {
-      userId: user_id,
-      userEmail: req.user.email,
-      userName: req.user.name || "User",
-      eventId: event_id,
-    };
+    const bookmark = await Bookmark.create({ user_id, event_id });
+    res.status(201).json({ message: "Bookmarked successfully", bookmark });
 
-    console.log("Enqueuing with userData:", userData);
-    await eventActionsQueue.add('event-action-queue', userData);
-
-    res.status(201).json({ message: "Bookmarked successfully" });
   } catch (error) {
     console.error("Bookmark error:", error.message);
     res.status(500).json({ message: "Internal server error" });
   }
 };
-
 
 
 //delete bookmark event of any user 
@@ -607,7 +600,6 @@ export const getSuggestedEvents=async(req,res)=>{
 export const addFeedback = async (req, res) => {
   const { user_id, event_id, rating, comment } = req.body;
   const now=new Date();
-
   const requiredFields = ["user_id", "event_id", "rating"];
   const missingFields = requiredFields.filter(
     (field) =>
@@ -615,6 +607,7 @@ export const addFeedback = async (req, res) => {
       req.body[field] === null ||
       req.body[field] === ""
   );
+
 
   if (missingFields.length > 0) {
     return res.status(400).send({
@@ -644,7 +637,7 @@ export const addFeedback = async (req, res) => {
       user_id,
       event_id,
       rating,
-      comment,
+      comment:encryptComment(comment),
     });
 
     res.status(200).json({
@@ -664,11 +657,15 @@ export const getFeedbackOfUser=async(req,res)=>{
     return res.status(400).json({message:"userId is not provided "});
   }
   try {
-    const user=await Feedback.findAll({where:{user_id}});
-    if(user.length===0){
+    const feedbacks=await Feedback.findAll({where:{user_id}});
+    if(feedbacks.length===0){
       return res.status(200).json({message:"This user has not added any feedbacks"});
     }
-    return res.status(200).json({user});
+    const decryptedFeedback=feedbacks.map(fb=>({
+      ...fb.dataValues,
+      comment:decrypt(fb.comment),
+    }));
+    return res.status(200).json({feedbacks:decryptedFeedback});
   }catch(err){
     console.log("error in fetching feedbacks:",err.message);
     return res.status(500).json({message:"Internal server error"});
@@ -787,5 +784,4 @@ export const addEventByOrganization = async (req, res) => {
     return res.status(500).json({ message: "Internal server error!!" });
   }
 };
-
 

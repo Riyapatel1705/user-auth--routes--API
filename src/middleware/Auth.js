@@ -8,7 +8,7 @@ export const Authorization = (req, res, next) => {
     console.log("Request Headers:", req.headers);
 
     const authHeader = req.header("Authorization");
-    
+
     if (!authHeader) {
       return res
         .status(401)
@@ -27,11 +27,7 @@ export const Authorization = (req, res, next) => {
 
     console.log("Decoded Token:", decoded); // To check if id & email present
 
-    req.user = {
-      id:decoded.id,
-      email:decoded.email,
-      name:decoded.name,
-    }; // Attach user info to request
+    req.user = decoded; // Attach user info to request
 
     next(); // Pass to next controller
   } catch (err) {
