@@ -92,9 +92,10 @@ Event.addHook('afterFind', (result) => {
     const phone = event.phone_no ? `Phone: ${event.phone_no}` : null;
     const email = event.email ? `Email: ${event.email}` : null;
 
-    event.dataValues.formatted_contact = [phone, email]
-      .filter(Boolean)
-      .join(' | ') || 'N/A';
+    const formattedContact = [phone, email].filter(Boolean).join(' | ') || 'N/A';
+
+    event.formatted_contact = formattedContact;           // Add here
+    event.dataValues.formatted_contact = formattedContact; // Also keep this if needed
   };
 
   if (Array.isArray(result)) {

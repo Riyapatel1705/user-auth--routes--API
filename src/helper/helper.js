@@ -1,17 +1,10 @@
 import { PDFDocument, StandardFonts, rgb } from 'pdf-lib';
 
-
-
 export const createPdfBuffer = async ({ userName, event }) => {
   if (!userName || !event) {
     console.error("Missing userName or event data in createPdfBuffer:", { userName, event });
     return null;
   }
-
-  // Attach formatted_contact inside the function
-  const phone = event.phone_no ? `Phone: ${event.phone_no}` : null;
-  const email = event.email ? `Email: ${event.email}` : null;
-  event.formatted_contact = [phone, email].filter(Boolean).join(' | ') || 'N/A';
 
   const pdfDoc = await PDFDocument.create();
   const page = pdfDoc.addPage([600, 750]);

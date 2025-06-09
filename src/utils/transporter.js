@@ -1,6 +1,8 @@
 import hbs from 'nodemailer-express-handlebars';
 import path from 'path';
 import nodemailer from 'nodemailer';
+import env from 'dotenv';
+env.config();
 
 export const transporter = nodemailer.createTransport({
   service: 'gmail',

@@ -35,8 +35,8 @@ new Worker(
       bookmarked_at: new Date(),
     });
   }catch(err){
-    console.error("error while creating bookmark:",err.message);
-    console.error(err);
+    console.log("error while creating bookmark:",err.message);
+    
   }
     console.log(`Bookmark added for user ${userId}`);
 
@@ -64,8 +64,6 @@ new Worker(
         },
       ],
     });
-
-    console.log(`Email with PDF sent to ${userEmail}`);
   },
   { connection }
 );

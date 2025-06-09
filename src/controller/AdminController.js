@@ -30,8 +30,7 @@ export const registerAdmin = async (req, res) => {
 
   export const loginAdmin = async (req, res) => {
     const { Admin_id, email } = req.body;
-    console.log("Login API Hit");
-
+    
     if (!Admin_id || !email) {
         return res.status(400).json({ message: "Admin_id and email are required" });
     }
@@ -63,10 +62,6 @@ export const registerAdmin = async (req, res) => {
 export const deleteAdmin = async (req, res) => {
     try {
         const { id } = req.params;
-
-        console.log("DELETE ADMIN ROUTE HIT");
-        console.log("Requested admin ID:", id);
-
         const adminId = parseInt(id);
         if (isNaN(adminId)) {
             return res.status(400).json({ message: "Invalid admin ID" });

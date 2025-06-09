@@ -24,9 +24,6 @@ export const Authorization = (req, res, next) => {
     }
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
-    console.log("Decoded Token:", decoded); // To check if id & email present
-
     req.user = {
       id:decoded.id,
       email:decoded.email,
@@ -35,7 +32,7 @@ export const Authorization = (req, res, next) => {
 
     next(); // Pass to next controller
   } catch (err) {
-    console.error("Auth Middleware Error:", err.message);
+    console.log("Auth Middleware Error:", err.message);
     res.status(401).json({ error: "Invalid or expired token." });
   }
 };

@@ -394,7 +394,7 @@ export const bookmarkEvent = async (req, res) => {
 
     res.status(201).json({ message: "Bookmarked successfully" });
   } catch (error) {
-    console.error("Bookmark error:", error.message);
+    console.log("Bookmark error:", error.message);
     res.status(500).json({ message: "Internal server error" });
   }
 };
@@ -607,7 +607,6 @@ export const getSuggestedEvents=async(req,res)=>{
 export const addFeedback = async (req, res) => {
   const { user_id, event_id, rating, comment } = req.body;
   const now=new Date();
-
   const requiredFields = ["user_id", "event_id", "rating"];
   const missingFields = requiredFields.filter(
     (field) =>
@@ -615,6 +614,7 @@ export const addFeedback = async (req, res) => {
       req.body[field] === null ||
       req.body[field] === ""
   );
+
 
   if (missingFields.length > 0) {
     return res.status(400).send({
@@ -664,11 +664,11 @@ export const getFeedbackOfUser=async(req,res)=>{
     return res.status(400).json({message:"userId is not provided "});
   }
   try {
-    const user=await Feedback.findAll({where:{user_id}});
-    if(user.length===0){
+    const feedbacks=await Feedback.findAll({where:{user_id}});
+    if(feedbacks.length===0){
       return res.status(200).json({message:"This user has not added any feedbacks"});
     }
-    return res.status(200).json({user});
+    return res.status(200).json({feedbacks});
   }catch(err){
     console.log("error in fetching feedbacks:",err.message);
     return res.status(500).json({message:"Internal server error"});
