@@ -19,3 +19,4 @@ export const validatePassword=(password)=>{
    return regex1.test(first_name)&&regex2.test(last_name);
  }
 
+ //this is chn
