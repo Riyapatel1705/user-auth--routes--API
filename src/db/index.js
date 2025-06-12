@@ -1,25 +1,18 @@
-import mysql from 'mysql2/promise';
-import dotenv from 'dotenv';
+// index.js
+import { db } from './db.js';
+import './models/User.js';
+import './models/Event.js';
+import './models/Bookmark.js';
+import './models/Feedback.js';
 
-dotenv.config();
+import './association.js';
 
-//create sql connection
-export const db = await mysql.createConnection({
-    host: process.env.DB_HOST,
-    user: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
-    database: process.env.DB_NAME,
-    waitForConnections: true,
-    connectionLimit: 10,
-    queueLimit: 0
-});
+(async () => {
+  try {
+    await db.authenticate();
+    console.log("Connected to MySQL using Sequelize");
+  } catch (error) {
+    console.error("Unable to connect to the database:", error.message);
+  }
+})();
 
-db.connect((err) => {
-    if (err) {
-        console.error('Error connecting to the database:', err.message);
-        return;
-    }
-    console.log('Connected to the database!');
-});
-
-export default db;
