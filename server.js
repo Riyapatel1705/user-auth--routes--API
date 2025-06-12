@@ -1,5 +1,6 @@
 import cors from "cors";
 import dotenv from "dotenv";
+dotenv.config();
 import express from "express";
 import path from "path";
 import { fileURLToPath } from "url"; // Import fileURLToPath to use in ES modules
@@ -10,10 +11,17 @@ import { UserRouter } from "./src/routes/UserRoutes.js";
 import { OrganizationRouter } from "./src/routes/OrganizationRoutes.js";
 import { Feedback } from "./src/db/models/Feedback.js";
 import './src/db/association.js';
-
+import * as Sentry from "@sentry/node";
+import '@sentry/tracing';
 dotenv.config();
 
+Sentry.init({
+  dsn:process.env.SENTRY_DSN,
+  tracesSampleRate:1.0,
+})
 const app = express();
+
+app.use(Sentry.Handlers.requestHandler());  // Correct
 app.use(cors({ origin: "http://localhost:3000", credentials: true }));
 app.use(express.json());
 app.use("/uploads", express.static("uploads"));
@@ -44,6 +52,8 @@ app.use((req, res, next) => {
     console.error("Error syncing database:", err.message);
   }
 })();
+
+app.use(Sentry.Handlers.errorHandler());
 
 const PORT = process.env.PORT || 5000
 app.listen(PORT, () => {

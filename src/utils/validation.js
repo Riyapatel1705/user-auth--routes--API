@@ -17,4 +17,77 @@ export const validatePassword = (password) => {
   return regex.test(password);
 };
 
+//username validation
+export const validateUsername = (first_name, last_name) => {
+  const regex1 = /^[a-zA-Z]{3,}$/;
+  const regex2 = /^[a-zA-Z]{4,}$/;
+  return regex1.test(first_name) && regex2.test(last_name);
+};
+export const checkEmailExists=async(email)=>{
+  try{const user= await User.findOne({where:{email}});
+  return user!==null;
+}catch(err){
+   throw new Error("Error checking email:",err.message);
+}
+}
 
+export const checkUsernameExists = async (first_name, last_name) => {
+    try {
+        const user = await User.findOne({ where: { first_name, last_name } });
+        return user !== null;
+    } catch (err) {
+        throw new Error("Error checking username: " + err.message);
+    }
+};
+
+//check events exists
+export const checkEventExists = async (name) => {
+  try {
+    const event = await Event.findOne({ where: { name } });
+    return event != null;
+  } catch (err) {
+    throw new Error("Error in checking event:", err.message);
+  }
+};
+
+export const isValidDate = (dateStr) => /^\d{4}-\d{2}-\d{2}$/.test(dateStr) && !isNaN(Date.parse(dateStr));
+
+export const escapeLike = (str) => str.replace(/[%_]/g, "\\$&");
+
+
+
+
+export const sendOTPEmail = async (options) => {
+  try {
+    if (!options.to) {
+      throw new Error("Recipient email (options.to) is undefined or empty.");
+    }
+
+    const transporter = nodemailer.createTransport({
+      host: process.env.SMTP_HOST,
+      port: process.env.SMTP_PORT,
+      secure: false,
+      auth: {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS,
+      },
+    });
+
+    const mailOptions = {
+      from: process.env.FROM_EMAIL,
+      to: options.to,
+      subject: options.subject || "No Subject",
+      text: options.text || "",
+      html: options.html || "",
+    };
+
+    // Optional log
+    console.log("Sending email to:", options.to);
+
+    const info = await transporter.sendMail(mailOptions);
+    console.log("Email sent successfully:", info.messageId);
+  } catch (error) {
+    console.error("Email Sending Error:", error.message);
+    throw error;
+  }
+};
