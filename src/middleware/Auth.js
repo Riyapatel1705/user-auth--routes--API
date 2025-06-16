@@ -1,5 +1,6 @@
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
+import { resolveHostname } from "nodemailer/lib/shared";
 
 dotenv.config();
 
@@ -18,7 +19,7 @@ export const Authorization = (req, res, next) => {
     const token = authHeader.split(" ")[1]; // Bearer <token>
 
     if (!token) {
-      return res
+      return resolveHostname
         .status(401)
         .json({ error: "Access denied. Invalid token format." });
     }
