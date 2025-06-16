@@ -2,6 +2,8 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { User } from "../db/models/User.js";
 import dotenv from "dotenv";
+import Sentry from "@sentry/node";
+import { CustomError } from "../utils/CustomError.js";
 dotenv.config();
 import {
   validateEmail,
@@ -17,32 +19,24 @@ export const register = async (req, res) => {
   const { first_name, last_name, email, password } = req.body;
 
   if (!validateUsername(first_name, last_name)) {
-    return res.status(400).json({
-      message:
-        "Username must be at least 3 characters long and only contains letters",
-    });
+    throw new CustomError('user name must be atleast 3 letters long and can only contain characters',400,"INVALID_USERNAME_FORMAT");
   }
   if (!validatePassword(password)) {
-    return res.status(400).json({
-      message:
-        "password must be at least 6 characters long and contain at least one number and one special character",
-    });
+    throw new CustomError('password must be atleast 6 letters long must include letters , characters and special characters',400,"INVALID_PASSWORD_FORMAT");
   }
   if (!validateEmail(email)) {
-    return res.status(400).json({ message: "Email format is incorrect." });
+    throw new CustomError('email format incorrect',400,"INVALID_EMAIL_FORMAT");
   }
 
   try {
     const usernameExists = await checkUsernameExists(first_name, last_name);
     if (usernameExists) {
-      return res.status(400).json({ message: "User already exists." });
+       throw new CustomError("user already exists",400,"USER_EXISTS");
     }
 
     const emailExists = await checkEmailExists(email);
     if (emailExists) {
-      return res
-        .status(400)
-        .json({ message: "This email's user already exists!" });
+        throw new CustomError("user already exists",400,"USER_EXISTS");
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -57,10 +51,16 @@ export const register = async (req, res) => {
     if (result) {
       res.status(200).json({ message: "user created successfully!" });
     } else {
-      res.status(401).json({ message: "error in creating user" });
+      throw new CustomError("error in creating user",400,"FAILED_TO_REGISTER");
     }
   } catch (err) {
     console.error("not able to create user", err);
+    if(err instanceof CustomError){
+          throw err;
+        }
+        Sentry.captureException(err);
+        throw new CustomError("internal server error",500,"FAILED_TO_REGISTER");
+    //throw new CustomError("internal server error",500,"FAILED_TO_REGISTER");
   }
 };
 
@@ -72,13 +72,13 @@ export const login = async (req, res) => {
     const user = await User.findOne({ where: { email } });
 
     if (!user) {
-      return res.status(400).json({ message: "Invalid email or password" });
+       throw new CustomError("user doesnt exist",400,"USER_DOESNT_EXISTS");
     }
 
     const isMatch = await bcrypt.compare(password, user.password);
 
     if (!isMatch) {
-      return res.status(400).json({ message: "Invalid email or password" });
+      throw new CustomError("invalid email or password",400,"INVALID_PASSWORD");
     }
 
     const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, {
@@ -88,7 +88,12 @@ export const login = async (req, res) => {
     res.json({ token });
   } catch (err) {
     console.error("Error during login:", err);
-    res.status(500).json({ message: "Database error" });
+    if(err instanceof CustomError){
+          throw err;
+        }
+        Sentry.captureException(err);
+        throw new CustomError("internal server error",500,"FAILED_TO_LOGIN");
+    //throw new CustomError("internal server error",500,"FAILED_TO_LOGIN");
   }
 };
 
@@ -101,7 +106,7 @@ export const getUser = async (req, res) => {
 
     if (!userId) {
       console.error("No user ID in decoded token");
-      return res.status(401).json({ error: "Unauthorized: No user ID found" });
+      throw new CustomError("no userid provided",400,"NO_USER_ID_PROVIDED")
     }
 
     console.log("Fetching user with ID:", userId);
@@ -113,7 +118,7 @@ export const getUser = async (req, res) => {
 
     if (!user) {
       console.error("User not found in database");
-      return res.status(404).json({ error: "User not found" });
+      throw new CustomError("user doesnt exist",400,"USER_DOESNT_EXISTS");
     }
 
     console.log("User Found:", user);
@@ -121,7 +126,12 @@ export const getUser = async (req, res) => {
     res.json({ user });
   } catch (err) {
     console.error("Error fetching user:", err.message, err.stack);
-    res.status(500).json({ error: "Server error" });
+    if(err instanceof CustomError){
+          throw err;
+        }
+        Sentry.captureException(err);
+        throw new CustomError("internal server error",500,"FAILED_TO_FETCH");
+    //throw new CustomError("internal server error",500,"FAILED_TO_FETCH");
   }
 };
 
@@ -147,7 +157,12 @@ export const forgetPassword = async (req, res) => {
     res.json({ message: "OTP sent to your email" });
   } catch (error) {
     console.error("Forget Password Error:", error);
-    res.status(500).json({ message: "Internal Server Error" });
+    if(err instanceof CustomError){
+          throw err;
+        }
+        Sentry.captureException(err);
+        throw new CustomError("internal server error",500,"DATABASE_ERROR");
+    //throw new CustomError("internal server error",500,"DATABASE_ERROR");
   }
 };
 
@@ -158,15 +173,11 @@ export const resetPassword = async (req, res) => {
     const { newPassword, confirmPassword } = req.body;
 
     if (!reset_password_otp) {
-      return res.status(400).json({ message: "OTP is required in query!" });
+      throw new CustomError("otp is required",400,"OTP_IS_REQUIRED");
     }
 
     if (!newPassword || !confirmPassword) {
-      return res.status(400).json({ message: "Both passwords are required" });
-    }
-    // STEP 1 : Validate Password
-    if (newPassword !== confirmPassword) {
-      return res.status(400).json({ message: "Passwords do not match" });
+      throw new CustomError("both passwords must be same",400,"PASSWORD_MISMATCH");
     }
 
     const user = await User.findOne({
@@ -174,7 +185,7 @@ export const resetPassword = async (req, res) => {
     });
 
     if (!user) {
-      return res.status(400).json({ message: "Invalid or expired OTP!" });
+      throw new CustomError("user is not registered ",400,"UNAUTHORIZED_USER");
     }
 
     const hashedPassword = await bcrypt.hash(newPassword, 10);
@@ -192,6 +203,11 @@ export const resetPassword = async (req, res) => {
     res.json({ message: "Password reset successful" });
   } catch (error) {
     console.error("Reset Password Error:", error);
-    res.status(500).json({ message: "Internal Server Error" });
+    if(err instanceof CustomError){
+          throw err;
+        }
+        Sentry.captureException(err);
+        throw new CustomError("internal server error",500,"DATABASE_ERROR");
+    //throw new CustomError("internal server error",500,"DATABASE_ERROR");
   }
 };

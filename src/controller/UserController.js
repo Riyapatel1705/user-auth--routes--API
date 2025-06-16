@@ -1,4 +1,6 @@
 import { User } from "../db/models/User.js";
+import Sentry from "@sentry/node";
+import { CustomError } from "../utils/CustomError.js";
 //update user info
 
 export const update = async (req, res) => {
@@ -8,7 +10,7 @@ export const update = async (req, res) => {
     const user = await User.findByPk(id);
 
     if (!user) {
-      return res.status(404).json({ message: "User doesn't exist!" });
+      throw new CustomError("user does not exists",400,"USER_DOESN'T EXISTS");
     }
     await user.update({
       first_name,
@@ -20,7 +22,12 @@ export const update = async (req, res) => {
     res.status(200).json({ message: "User updated successfully!" });
   } catch (err) {
     console.error("Error updating user:", err);
-    res.status(500).json({ message: "Error updating user" });
+    if(err instanceof CustomError){
+          throw err;
+        }
+        Sentry.captureException(err);
+        throw new CustomError("internal server error",500,"FAILED_TO_UPDATE");
+    //throw new CustomError("internal server error",500,"DATABASE_ERROR");
   }
 };
 
@@ -32,13 +39,18 @@ export const deleteUser = async (req, res) => {
     const user = await User.findByPk(id);
 
     if (!user) {
-      return res.status(404).json({ message: "User not found" });
+     throw new CustomError("user does not exists",400,"USER_DOESN'T EXISTS");
     }
 
     await user.destroy();
     res.json({ message: "User deleted successfully" });
   } catch (err) {
     console.error("Error deleting user:", err);
-    res.status(500).json({ message: "Error deleting user" });
+    if(err instanceof CustomError){
+          throw err;
+        }
+        Sentry.captureException(err);
+        throw new CustomError("internal server error",500,"FAILED_TO_DELETE");
+    //throw new CustomError("internal server error",500,"DATABASE_ERROR");
   }
 };

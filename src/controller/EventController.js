@@ -9,6 +9,8 @@ import { Admin } from "../db/models/Admin.js";
 import { Feedback } from "../db/models/Feedback.js";
 import { User } from "../db/models/User.js";
 import { Organization } from "../db/models/Organization.js";
+import * as Sentry from '@sentry/node';
+import { CustomError } from "../utils/CustomError.js";
 
 env.config();
 
@@ -51,12 +53,12 @@ export const registerUserEvent = async (req, res) => {
 
   const userId = req.user?.id;
   if (!userId) {
-    return res.status(401).json({ message: "Unauthorized user!" });
+    throw new CustomError("UserId is required",400,"USER_ID_REQUIRED");
   }
 
   const event = await checkEventExists(name);
   if (event) {
-    return res.status(400).json({ message: "Event with this name already exists!" });
+    throw new CustomError("event already exists",400,"EVENT_ALREADY_EXISTS");
   }
 
   try {
@@ -73,12 +75,16 @@ export const registerUserEvent = async (req, res) => {
     if (create) {
       return res.status(201).json({ message: "Event created successfully!", event: create });
     } else {
-      return res.status(400).json({ message: "Error in creating an event" });
+      throw new CustomError("error in creating event",400,"FAILED_TO_CREATE_EVENT");
     }
 
   } catch (err) {
     console.error("Event creation error:", err.errors || err.message || err);
-    return res.status(500).json({ message: err.message || "Internal server error" });
+    if(err instanceof CustomError){
+      throw err;
+    }
+    Sentry.captureException(err);
+    throw new CustomError("internal server error",500,"FAILED_TO_LOGIN");
   }
 };
 
@@ -87,7 +93,7 @@ export const updateEvent = async (req, res) => {
   const { id } = req.query;
 
   if (!id) {
-    return res.status(400).json({ message: "No id provided in URL" });
+    throw new CustomError("UserId is required",400,"USER_ID_REQUIRED");
   }
 
   try {
@@ -97,7 +103,7 @@ export const updateEvent = async (req, res) => {
     });
 
     if (!event) {
-      return res.status(404).json({ message: "No such event exists!" });
+      throw new CustomError("event not found",404,"NO_EVENT_FOUND");
     }
 
     const {
@@ -140,23 +146,28 @@ export const updateEvent = async (req, res) => {
     return res.status(200).json({ message: "Event updated successfully!" });
   } catch (err) {
     console.error(err);
-    return res.status(500).json({ message: "Error updating event" });
-  }
+    if(err instanceof CustomError){
+      throw err;
+    }
+    Sentry.captureException(err);
+    throw new CustomError("internal server error",500,"FAILED_TO_UPDATE_EVENT");
+    //throw new CustomError("internal server error",500,"FAILED_TO_UPDATE_EVENT");
+    
 };
-
+}
 //delete event
 export const deleteEvent = async (req, res) => {
   const { id } = req.query;
 
   if (!id) {
-    return res.status(400).json({ message: "No id provided" });
+    throw new CustomError("UserId is required",400,"USER_ID_REQUIRED");
   }
 
   try {
     const event = await Event.findByPk(id);
 
     if (!event) {
-      return res.status(404).json({ message: "No such event exists!" });
+      throw new CustomError("event not found",404,"NO_EVENT_FOUND");
     }
 
     await Event.destroy({
@@ -166,7 +177,12 @@ export const deleteEvent = async (req, res) => {
     return res.status(200).json({ message: "Event deleted successfully" });
   } catch (err) {
     console.error(err);
-    return res.status(500).json({ message: "Error in deleting event" });
+    if(err instanceof CustomError){
+      throw err;
+    }
+    Sentry.captureException(err);
+    throw new CustomError("internal server error",500,"FAILED_TO_DELETE_EVENT")
+   // throw new CustomError("internal server error",500,"FAILED_TO_DELETE_EVENT");
   }
 };
 
@@ -189,15 +205,15 @@ export const getAllEvents = async (req, res) => {
 
     // Validate date format
     if (start_date && !isValidDate(start_date)) {
-      return res.status(400).json({ error: "Invalid start_date format. Use YYYY-MM-DD." });
+      throw new CustomError("invalid start date format",400,"INVALID_DATE_FORMAT");
     }
     if (end_date && !isValidDate(end_date)) {
-      return res.status(400).json({ error: "Invalid end_date format. Use YYYY-MM-DD." });
+      throw new CustomError("invalid end date format",400,"INVALID_DATE_FORMAT");
     }
 
     // Validate price
     if ((min_price && isNaN(min_price)) || (max_price && isNaN(max_price))) {
-      return res.status(400).json({ error: "Price filters must be numeric." });
+      throw new CustomError("price added must be numeric",400,"INVALID_PRICE_FORMAT");
     }
 
     // Pagination
@@ -286,7 +302,12 @@ export const getAllEvents = async (req, res) => {
     });
   } catch (error) {
     console.error("Error fetching events:", error);
-    res.status(500).json({ error: "Internal server error" });
+    if(err instanceof CustomError){
+      throw err;
+    }
+    Sentry.captureException(err);
+    throw new CustomError("internal server error",500,"FAILED_TO_FILTER_EVENT");
+    //throw new CustomError("internal server error",500,"FAILED_TO_FILTER_EVENT");
   }
 };
 
@@ -294,7 +315,7 @@ export const getAllEvents = async (req, res) => {
 export const getEventById=async(req,res)=>{
   const {id}=req.query;
   if(!id){
-    return res.status(400).json({message:"Please Provide an event Id"});
+    throw new CustomError("event id required",400,"EVENT_ID_NOT_FOUND");
   }
   try {
     const event=await Event.findOne({where:{id}});
@@ -304,7 +325,12 @@ export const getEventById=async(req,res)=>{
     return res.status(200).json({event});
   }catch(err){
     console.error("Error in fetching events details:",err.message);
-    return res.status(500).json({message:"Internal server error"});
+    if(err instanceof CustomError){
+      throw err;
+    }
+    Sentry.captureException(err);
+    throw new CustomError("internal server error",500,"FAILED_TO_FIND_EVENT");
+    //throw new CustomError("internal server error",500,"FAILED_TO_FIND_EVENT");
   }
 }
 
@@ -348,7 +374,12 @@ export const getUpcomingEvents=async(req,res)=>{
     });
   }catch(err){
     console.log("Error in fetching Upcoming events:",err.message);
-    res.status(500).json({message:"Internal server error!"});
+    if(err instanceof CustomError){
+      throw err;
+    }
+    Sentry.captureException(err);
+    throw new CustomError("internal server error",500,"FAILED_TO_FIND_EVENT");
+    //throw new CustomError("internal server error",500,"FAILED_TO_FIND_EVENT");
   }
 }
 
@@ -361,11 +392,11 @@ export const bookmarkEvent = async (req, res) => {
 
 
     if (!user_id) {
-      return res.status(401).json({ message: "Unauthorized or missing user" });
+      throw new CustomError("UserId is required",400,"USER_ID_REQUIRED");
     }
 
     if (!event_id || typeof event_id !== "string") {
-      return res.status(400).json({ message: "Valid Event ID is required" });
+      throw new CustomError("eventId is required",400,"EVENT_ID_REQUIRED");
     }
     console.log("user_id:", user_id);
     console.log("event_id:", event_id);
@@ -374,7 +405,8 @@ export const bookmarkEvent = async (req, res) => {
 
     const eventExists = await Event.findByPk(event_id);
     if (!eventExists) {
-      return res.status(200).json({ message: "Event does not exist" });
+      throw new CustomError("event not found",404,"NO_EVENT_FOUND");
+
     }
 
     const existing = await Bookmark.findOne({ where: { user_id, event_id } });
@@ -387,7 +419,12 @@ export const bookmarkEvent = async (req, res) => {
 
   } catch (error) {
     console.error("Bookmark error:", error.message);
-    res.status(500).json({ message: "Internal server error" });
+    if(err instanceof CustomError){
+      throw err;
+    }
+    Sentry.captureException(err);
+    throw new CustomError("internal server error",500,"FAILED_TO_BOOKMARK_EVENT");
+    //throw new CustomError("internal server error",500,"FAILED_TO_BOOKMARK_EVENT");
   }
 };
 
@@ -399,7 +436,7 @@ export const deleteBookmarkByUser = async (req, res) => {
 
     // Check if the userId is provided
     if (!user_id) {
-      return res.status(400).json({ message: "Please provide the userId" });
+       throw new CustomError("UserId is required",400,"USER_ID_REQUIRED");
     }
 
     // Check if there are any bookmarks for the given userId
@@ -419,7 +456,12 @@ export const deleteBookmarkByUser = async (req, res) => {
     return res.status(200).json({ message: "Bookmarks deleted successfully" });
   } catch (err) {
     console.log("Error in destroying user's bookmarked events:", err);
-    return res.status(500).json({ message: "Internal server error" });
+    if(err instanceof CustomError){
+      throw err;
+    }
+    Sentry.captureException(err);
+    throw new CustomError("internal server error",500,"FAILED_TO_DELETE_BOOKMARK_EVENT");
+    //throw new CustomError("internal server error",500,"FAILED_TO_DELETE_BOOKMARK_EVENT");
   }
 };
 
@@ -430,7 +472,7 @@ export const deleteBookmarkEvent = async (req, res) => {
     const { event_id, user_id } = req.query;
 
     if (!event_id || !user_id) {
-      return res.status(400).json({ message: "Please provide both eventId and userId" });
+      throw new CustomError("event id and user id is required",400,"EVENT_USER_ID_NOT_FOUND");
     }
 
     const bookmark = await Bookmark.findOne({
@@ -447,7 +489,12 @@ export const deleteBookmarkEvent = async (req, res) => {
     return res.status(200).json({ message: "Bookmarked event removed !" });
   } catch (err) {
     console.log("Error in removing bookmarked event:", err.message);
-    return res.status(500).json({ message: "Internal server error!" });
+    if(err instanceof CustomError){
+      throw err;
+    }
+    Sentry.captureException(err);
+    throw new CustomError("internal server error",500,"FAILED_TO_DELETE_BOOKMARK_EVENT");
+    //throw new CustomError("internal server error",500,"FAILED_TO_DELETE_BOOKMARK_EVENT");
   }
 };
 
@@ -458,7 +505,7 @@ export const getBookmarkedEvents = async (req, res) => {
     const { user_id } = req.query;
 
     if (!user_id) {
-      return res.status(400).json({ message: "Please provide userId" });
+       throw new CustomError("UserId is required",400,"USER_ID_REQUIRED");
     }
 
     const bookmarks = await Bookmark.findAll({
@@ -482,7 +529,12 @@ export const getBookmarkedEvents = async (req, res) => {
     return res.status(200).json({ bookmarkedEvents });
   } catch (err) {
     console.log("Error in getting bookmarked events:", err.message);
-    return res.status(500).json({ message: "Internal server error" });
+    if(err instanceof CustomError){
+      throw err;
+    }
+    Sentry.captureException(err);
+    throw new CustomError("internal server error",500,"FAILED_TO_GET_BOOKMARK_EVENT");
+    //throw new CustomError("internal server error",500,"FAILED_TO_GET_BOOKMARK_EVENT");
   }
 };
 
@@ -495,7 +547,7 @@ export const deletePastEvents = async (req, res) => {
     // Check if the user is an admin
     const admin = await Admin.findOne({ where: { id } });
     if (!admin) {
-      return res.status(400).json({ message: "You are not authorized to delete events" });
+       throw new CustomError("you are not authorized for this action",400,"UNAUTHORIZED_USER");
     }
 
     // Get today's date
@@ -512,7 +564,7 @@ export const deletePastEvents = async (req, res) => {
 
     // If there are no past events
     if (pastEvents.count === 0) {
-      return res.status(400).json({ message: "No past events found" });
+       throw new CustomError("no past events found",400,"EVENT_NOT_FOUNDq");
     }
 
     // Delete past events
@@ -532,7 +584,12 @@ export const deletePastEvents = async (req, res) => {
     return res.status(200).json({ message: "Past events have been deleted" });
 
   } catch (error) {
-    return res.status(500).json({ message: "Internal server error" });
+   if(err instanceof CustomError){
+      throw err;
+    }
+    Sentry.captureException(err);
+    throw new CustomError("internal server error",500,"FAILED_TO_DELETE_PAST_EVENT");
+    //throw new CustomError("internal server error",500,"FAILED_TO_DELETE_PAST_EVENT");
   }
 };
 
@@ -558,7 +615,12 @@ if(events.length===0){
 return res.status(200).json({closingSoonEvents:events});
 }catch(err){
   console.error("Error fetchung closing soon events:",err.message);
-  return res.status(500).json({message:"Internal server error"});
+  if(err instanceof CustomError){
+      throw err;
+    }
+    Sentry.captureException(err);
+    throw new CustomError("internal server error",500,"FAILED_TO_GET_EVENTS");
+  //throw new CustomError("internal server error",500,"FAILED_TO_GET_EVENTS");
 }
 };
 
@@ -566,8 +628,7 @@ return res.status(200).json({closingSoonEvents:events});
 export const getSuggestedEvents=async(req,res)=>{
   try {
     const {user_id}=req.query;
-    if(!user_id) return res.status(400).json({message:"User ID required"});
-
+    if(!user_id)  throw new CustomError("UserId is required",400,"USER_ID_REQUIRED");
     const bookmarks=await Bookmark.findAll({
       where:{user_id},
       include:[{model:Event,as:"event"}]
@@ -588,7 +649,13 @@ export const getSuggestedEvents=async(req,res)=>{
     return res.status(200).json({suggestedEvents});
   }catch(err){
     console.log("Error in suggesting events",err.message);
-    return res.status(500).json({message:"Internal server error"})
+    if(err instanceof CustomError){
+      throw err;
+    }
+    Sentry.captureException(err);
+    throw new CustomError("internal server error",500,"FAILED_TO_GET_EVENTS");
+    // throw new CustomError("internal server error",500,"FAILED_TO_GET_EVENTS");
+ 
   }
 };
 
@@ -628,7 +695,7 @@ export const addFeedback = async (req, res) => {
 
     const user = await User.findByPk(user_id);
     if (!user) {
-      return res.status(404).json({ message: "User not found" });
+       throw new CustomError("UserId is required",400,"USER_ID_REQUIRED");
     }
 
     const feedback = await Feedback.create({ 
@@ -644,7 +711,12 @@ export const addFeedback = async (req, res) => {
     });
   } catch (err) {
     console.log("error in submitting feedback:", err.message);
-    return res.status(500).json({ message: "Internal server error" });
+    if(err instanceof CustomError){
+      throw err;
+    }
+    Sentry.captureException(err);
+    throw new CustomError("internal server error",500,"FAILED_TO_ADD_FEEDBACK");
+    // throw new CustomError("internal server error",500,"FAILED_TO_ADD_FEEDBACKS");
   }
 };
 
@@ -652,7 +724,7 @@ export const addFeedback = async (req, res) => {
 export const getFeedbackOfUser=async(req,res)=>{
   const {user_id}=req.query;
   if(!user_id){
-    return res.status(400).json({message:"userId is not provided "});
+     throw new CustomError("UserId is required",400,"USER_ID_REQUIRED");
   }
   try {
     const user=await Feedback.findAll({where:{user_id}});
@@ -662,7 +734,12 @@ export const getFeedbackOfUser=async(req,res)=>{
     return res.status(200).json({user});
   }catch(err){
     console.log("error in fetching feedbacks:",err.message);
-    return res.status(500).json({message:"Internal server error"});
+    if(err instanceof CustomError){
+      throw err;
+    }
+    Sentry.captureException(err);
+    throw new CustomError("internal server error",500,"FAILED_TO_GET_FEEDBACKS");
+    //throw new CustomError("internal server error",500,"FAILED_TO_GET_FEEDBACKS");
   }
 }
 
@@ -671,7 +748,7 @@ export const getFeedbackOfEvent = async (req, res) => {
   const { event_id } = req.query;
 
   if (!event_id) {
-    return res.status(400).json({ message: "No eventId provided" });
+    throw new CustomError("event id required",400,"EVENT_ID_NOT_FOUND");
   }
 
   try {
@@ -692,7 +769,12 @@ export const getFeedbackOfEvent = async (req, res) => {
     return res.status(200).json({ feedbacks: eventFeedbacks });
   } catch (err) {
     console.log("Error in fetching event's feedbacks:", err.message);
-    return res.status(500).json({ message: "Internal server error" });
+    if(err instanceof CustomError){
+      throw err;
+    }
+    Sentry.captureException(err);
+    throw new CustomError("internal server error",500,"FAILED_TO_GET_FEEDBACKS");   
+    // throw new CustomError("internal server error",500,"FAILED_TO_GET_FEEDBACKS");
   }
 };
 
@@ -701,7 +783,7 @@ export const getFeedbackOfEvent = async (req, res) => {
 export const deleteFeedback=async(req,res)=>{
   const{user_id,event_id}=req.query;
   if(!user_id||!event_id){
-    return res.status(400).json({message:"userId and eventId both are required fields"});
+    throw new CustomError("event id and user id is required",400,"EVENT_USER_ID_NOT_FOUND");
   }
   try {
     const feedback=await Feedback.findOne({where:{user_id,event_id}});
@@ -712,7 +794,12 @@ export const deleteFeedback=async(req,res)=>{
     return res.status(200).json({message:"Feedback has been removed successfully"});
   }catch(err){
     console.log("error in deleting Feedback:",err.message);
-    return res.status(500).json({message:"Internal server error"});
+    if(err instanceof CustomError){
+      throw err;
+    }
+    Sentry.captureException(err);
+    throw new CustomError("internal server error",500,"FAILED_TO_DELETE_FEEDBACKS");
+    //throw new CustomError("internal server error",500,"FAILED_TO_DELETE_FEEDBACKS");
   }
 }
 
@@ -720,7 +807,7 @@ export const deleteFeedback=async(req,res)=>{
 export const addEventByOrganization = async (req, res) => {
   const { organization_id } = req.query;
   if (!organization_id) {
-    return res.status(400).json({ message: "No organization_id provided" });
+     throw new CustomError("organization id is required",400,"ORGANIZATION_ID_REQUIRED");
   }
 
   const requiredFields = [
@@ -775,7 +862,12 @@ export const addEventByOrganization = async (req, res) => {
 
   } catch (err) {
     console.error("Error in creating event:", err);
-    return res.status(500).json({ message: "Internal server error!!" });
+    if(err instanceof CustomError){
+      throw err;
+    }
+    Sentry.captureException(err);
+    throw new CustomError("internal server error",500,"FAILED_TO_ADD_ORGANIZATION");
+    //throw new CustomError("internal server error",500,"FAILED_TO_ADD_ORGANIZATION");
   }
 };
 

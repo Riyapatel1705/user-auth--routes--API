@@ -1,11 +1,13 @@
 import { Organization } from '../db/models/Organization.js';
 import { Admin } from '../db/models/Admin.js';
 import { where } from 'sequelize';
+import Sentry from "@sentry/node";
+import { CustomError } from '../utils/CustomError.js';
 
 export const createOrganization=async(req,res)=>{
     const{Admin_id}=req.query;
     if(!Admin_id){
-        return res.status(400).json({message:"Please Provide Admin_id!"});
+        throw new CustomError("admin id is not provided",400,"NO_ADMINID_PROVIDED");
     }
         const {organization_name,organization_type,contact_email,website}=req.body;
         const requiredFields=['organization_name','organization_type','contact_email'];
@@ -23,7 +25,7 @@ export const createOrganization=async(req,res)=>{
         try{
             const admin=await Admin.findOne({where:{Admin_id}});
             if(!admin){
-                return res.status(400).json({message:"No admin found for this ID"});
+                throw new CustomError("admin not found",400,ADMIN_NOT_FOUND);
             }
             const organization = await Organization.create({
                 admin_id: Admin_id,
@@ -34,12 +36,17 @@ export const createOrganization=async(req,res)=>{
               });
               
             if(!organization){
-                return res.status(400).json({message:"Error in creating organization"});
+                throw new CustomError("error in creating organization",400,"FAILED_TO_CREATE_ORGANIZATION");
             }
             return res.status(200).json({message:"Organization created Successfully",organization});
         }catch(err){
             console.log("Something wrong happened:",err.message);
-            return res.status(500).json({message:"Internal server error"});
+            if(err instanceof CustomError){
+                  throw err;
+                }
+                Sentry.captureException(err);
+                throw new CustomError("internal server error",500,"FAILED_TO_CREATE")
+            //throw new CustomError("internal server error",500,"DATABASE_ERROR");
         }
     }
   // Update organization
@@ -48,13 +55,13 @@ export const updateOrganization = async (req, res) => {
     const { organization_id } = req.params; // Use URL params instead of query params
 
     if (!organization_id) {
-        return res.status(400).json({ message: "Organization_id is required" });
+        throw new CustomError("organization id is not provided",400,"NO_ORGANIZATIONID_PROVIDED");
     }
 
     try {
         const organization = await Organization.findOne({ where: { organization_id } });
         if (!organization) {
-            return res.status(404).json({ message: "Organization does not exist!" });
+            throw new CustomError("there is no organization exists",400,"NO_ORGANIZATION_EXISTS");
         }
 
         // Update organization
@@ -69,7 +76,12 @@ export const updateOrganization = async (req, res) => {
 
     } catch (err) {
         console.error("Error updating organization:", err.message);
-        return res.status(500).json({ message: "Internal server error" });
+       if(err instanceof CustomError){
+             throw err;
+           }
+           Sentry.captureException(err);
+           throw new CustomError("internal server error",500,"FAILED_TO_UPDATE");
+        // throw new CustomError("internal server error",500,"DATABASE_ERROR");
     }
 };
 
@@ -78,13 +90,13 @@ export const deleteOrganization = async (req, res) => {
     const { organization_id } = req.params; // Use URL params instead of query params
 
     if (!organization_id) {
-        return res.status(400).json({ message: "Organization_id is required" });
-    }
+            throw new CustomError("organization id is not provided",400,"NO_ORGANIZATIONID_PROVIDED");
+        }
 
     try {
         const organization = await Organization.findOne({ where: { organization_id } });
         if (!organization) {
-            return res.status(404).json({ message: "Organization does not exist!" });
+            throw new CustomError("there is no organization exists",400,"NO_ORGANIZATION_EXISTS");
         }
 
         // Delete the organization
@@ -93,6 +105,11 @@ export const deleteOrganization = async (req, res) => {
 
     } catch (err) {
         console.error("Error deleting organization:", err.message);
-        return res.status(500).json({ message: "Internal server error!" });
+        if(err instanceof CustomError){
+              throw err;
+            }
+            Sentry.captureException(err);
+            throw new CustomError("internal server error",500,"FAILED_TO_DELETE");
+        // throw new CustomError("internal server error",500,"DATABASE_ERROR");
     }
 };

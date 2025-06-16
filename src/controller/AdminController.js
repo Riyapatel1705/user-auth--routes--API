@@ -1,5 +1,7 @@
 import { Admin } from "../db/models/Admin.js";
 import jwt from 'jsonwebtoken';
+import Sentry from "@sentry/node";
+import { CustomError } from "../utils/CustomError.js";
 
 export const registerAdmin = async (req, res) => {
     try {
@@ -24,8 +26,8 @@ export const registerAdmin = async (req, res) => {
       console.error("Error in registerAdmin:", err); // Not just err.message
   
       // Step 6: Send error response
-      return res.status(500).json({ message: "Internal server error" });
-    }
+      throw new CustomError("internal server error",500,"FAILED_TO_REGISTER_ADMIN");
+     }
   };
 
   export const loginAdmin = async (req, res) => {
@@ -33,7 +35,7 @@ export const registerAdmin = async (req, res) => {
     console.log("Login API Hit");
 
     if (!Admin_id || !email) {
-        return res.status(400).json({ message: "Admin_id and email are required" });
+        throw new CustomError("admin id and email are required",500,"ADMIN_ID AND EMAIL IS REQUIRED");
     }
 
     try {
@@ -42,7 +44,7 @@ export const registerAdmin = async (req, res) => {
         });
 
         if (!admin) {
-            return res.status(401).json({ message: "Admin does not exist or invalid credentials" });
+            throw new CustomError("admin does not exists",404,"ADMIN_NOT_FOUND");
         }
 
         const role = admin.role;
@@ -56,7 +58,7 @@ export const registerAdmin = async (req, res) => {
         return res.json({ token });
     } catch (err) {
         console.error("Error during login:", err);
-        return res.status(500).json({ message: "Internal server error" });
+        throw new CustomError("internal server error",500,"FAILED_TO_LOGIN_ADMIN");
     }
 };
 
@@ -66,24 +68,24 @@ export const deleteAdmin = async (req, res) => {
         const { id } = req.query; 
 
         if (!id) {
-            return res.status(400).json({ message: "No admin ID has been provided" });
+            throw new CustomError("no id provided",400,"ADMIN_ID_REQUIRED");
         }
 
         const isAdmin = await Admin.findOne({ where: { id } });
 
         if (!isAdmin) {
-            return res.status(401).json({ message: "The user is not an admin" });
+            throw new CustomError("user is not admin",401,"UNAUTHORIZED_USER");
         }
 
         const deleteAdmin = await Admin.destroy({ where: { id } });
 
         if (!deleteAdmin) {
-            return res.status(400).json({ message: "Unable to delete admin" });
+            throw new CustomError("not able to delete admin",400,"UNABLE_TO_DELETE_ADMIN");
         }
 
         return res.status(200).json({ message: "Admin has been deleted successfully!" });
 
     } catch (err) {
-        return res.status(500).json({ message: "Internal server error" });
+        throw new CustomError("internal server error",500,"FAILED_TO_DELETE_ADMIN");
     }
 };
