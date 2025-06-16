@@ -54,6 +54,13 @@ app.use((req, res, next) => {
 })();
 
 app.use(Sentry.Handlers.errorHandler());
+app.use((err,req,res,next)=>{
+  const statusCode=err.statusCode||500;
+  res.status(statusCode).json({
+    error:err.message,
+    code:err.errorCode||"INTERNAL_ERROR"
+  });
+});
 
 const PORT = process.env.PORT || 5000
 app.listen(PORT, () => {
